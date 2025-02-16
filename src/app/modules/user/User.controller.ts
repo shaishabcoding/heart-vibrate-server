@@ -29,13 +29,6 @@ const createUser: RequestHandler = catchAsync(async ({ body }, res) => {
     httpOnly: true,
   });
 
-  console.log({
-    success: true,
-    statusCode: StatusCodes.CREATED,
-    message: 'User created successfully!',
-    data: { token: accessToken, user },
-  });
-
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.CREATED,

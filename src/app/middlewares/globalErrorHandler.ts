@@ -9,6 +9,7 @@ import handleZodError from '../../errors/handleZodError';
 import { errorLogger } from '../../shared/logger';
 import { IErrorMessage } from '../../types/errors.types';
 import { StatusCodes } from 'http-status-codes';
+import ServerError from '../../errors/ServerError';
 
 const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
   config.node_env === 'development'
@@ -52,7 +53,7 @@ const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
           },
         ]
       : [];
-  } else if (error instanceof ApiError) {
+  } else if (error instanceof ApiError || error instanceof ServerError) {
     statusCode = error.statusCode;
     message = error.message;
     errorMessages = error.message

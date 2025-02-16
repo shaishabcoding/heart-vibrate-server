@@ -48,7 +48,7 @@ const getAllUser: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const userList: RequestHandler = catchAsync(async (req, res) => {
-  const users = await UserServices.userList(req.query.name as string);
+  const users = await UserServices.userList(req.query.search as string);
 
   sendResponse(res, {
     success: true,

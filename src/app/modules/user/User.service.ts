@@ -24,12 +24,13 @@ const getAllUser = async (query: Record<string, unknown>) => {
   };
 };
 
-const userList = async (name: string) => {
+const userList = async (name: string, removeId: string) => {
   const users = await User.find({
     $or: [
       { 'name.firstName': new RegExp(name, 'i') },
       { 'name.lastName': new RegExp(name, 'i') },
     ],
+    _id: { $ne: removeId },
   }).select('_id avatar name');
 
   return users;

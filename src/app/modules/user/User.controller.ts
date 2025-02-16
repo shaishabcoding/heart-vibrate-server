@@ -54,7 +54,19 @@ const getAllUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const userList: RequestHandler = catchAsync(async (req, res) => {
+  const users = await UserServices.userList(req.query.name as string);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Users are retrieved successfully!',
+    data: users,
+  });
+});
+
 export const UserControllers = {
   createUser,
   getAllUser,
+  userList,
 };

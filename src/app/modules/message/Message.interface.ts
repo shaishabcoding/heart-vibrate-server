@@ -5,4 +5,5 @@ export interface IMessage extends Document {
   message: string;
   sender: Types.ObjectId;
   readBy: Types.ObjectId[];
+  likedBy: Types.ObjectId[];
 }

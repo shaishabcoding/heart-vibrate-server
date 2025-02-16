@@ -23,6 +23,12 @@ const messageSchema = new Schema<IMessage>(
         ref: 'User',
       },
     ],
+    likedBy: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     timestamps: true,

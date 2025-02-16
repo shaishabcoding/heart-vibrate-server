@@ -13,7 +13,7 @@ router.post(
   '/resolve',
   imageUploader((req, images) => {
     req.body.image = images[0];
-  }),
+  }, true),
   purifyRequest(ChatValidation.resolve),
   ChatController.resolve,
 );

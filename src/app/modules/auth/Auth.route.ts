@@ -38,7 +38,7 @@ router.post('/reset-password', auth('USER'), AuthController.resetPassword);
  */
 router.get(
   '/refresh-token',
-  purifyRequest(AuthValidation.refreshTokenValidationSchema),
+  // purifyRequest(AuthValidation.refreshTokenValidationSchema),
   AuthController.refreshToken,
 );
 

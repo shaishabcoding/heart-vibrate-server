@@ -49,13 +49,14 @@ const changePassword: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const refreshToken: RequestHandler = catchAsync(async (req, res) => {
-  const result = await AuthServices.refreshToken(req.cookies.refreshToken);
+  console.log(req.cookies);
+  // const result = await AuthServices.refreshToken(req.cookies.refreshToken);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'New Access create successfully!',
-    data: result,
+    // data: result,
   });
 });
 

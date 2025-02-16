@@ -1,6 +1,5 @@
 import express from 'express';
 import { AuthController } from './Auth.controller';
-import validateRequest from '../../middlewares/validateRequest';
 import { AuthValidation } from './Auth.validation';
 import auth from '../../middlewares/auth';
 import { UserControllers } from '../user/User.controller';
@@ -21,7 +20,7 @@ router.post(
 
 router.post(
   '/login',
-  validateRequest(AuthValidation.loginValidationSchema),
+  purifyRequest(AuthValidation.loginValidationSchema),
   AuthController.login,
 );
 
@@ -30,7 +29,7 @@ router.post('/logout', auth('USER'), AuthController.logout);
 router.patch(
   '/change-password',
   auth('USER'),
-  validateRequest(AuthValidation.passwordChangeValidationSchema),
+  purifyRequest(AuthValidation.passwordChangeValidationSchema),
   AuthController.changePassword,
 );
 
@@ -43,7 +42,7 @@ router.post('/reset-password', auth('USER'), AuthController.resetPassword);
  */
 router.get(
   '/refresh-token',
-  validateRequest(AuthValidation.refreshTokenValidationSchema),
+  purifyRequest(AuthValidation.refreshTokenValidationSchema),
   AuthController.refreshToken,
 );
 

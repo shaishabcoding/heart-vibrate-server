@@ -5,7 +5,9 @@ const chatSchema = new Schema<IChat>(
   {
     name: {
       type: String,
-      required: true,
+    },
+    image: {
+      type: String,
     },
     users: [
       {

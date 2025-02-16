@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { AuthRoutes } from '../app/modules/auth/Auth.route';
 import { UserRoutes } from '../app/modules/user/User.route';
+import { ChatRoutes } from '../app/modules/chat/Chat.route';
 
 const router = Router();
 
@@ -12,6 +13,10 @@ const apiRoutes: { path: string; route: Router }[] = [
   {
     path: '/users',
     route: UserRoutes,
+  },
+  {
+    path: '/chat',
+    route: ChatRoutes,
   },
 ];
 

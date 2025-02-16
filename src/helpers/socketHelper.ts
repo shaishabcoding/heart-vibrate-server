@@ -100,3 +100,9 @@ const socket = (io: Server) => {
 };
 
 export const socketHelper = { socket };
+/**
+ *
+ * socket.emit("limmer").to(rkle).salkjf
+ */
+
+/*** */

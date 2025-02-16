@@ -4,9 +4,11 @@ import { Secret } from 'jsonwebtoken';
 import config from '../../config';
 import ApiError from '../../errors/ApiError';
 import { jwtHelper } from '../../helpers/jwtHelper';
+import User from '../modules/user/User.model';
+import ServerError from '../../errors/ServerError';
 
 const auth =
-  (...roles: string[]) =>
+  (...roles: ('USER' | 'ADMIN')[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tokenWithBearer = req.headers.authorization;
@@ -18,15 +20,21 @@ const auth =
         const token = tokenWithBearer.split(' ')[1];
 
         //verify token
-        const verifyUser = jwtHelper.verifyToken(
+        const { email } = jwtHelper.verifyToken(
           token,
           config.jwt.jwt_secret as Secret,
         );
+
+        const user = await User.findOne({ email });
+
+        if (!user)
+          throw new ServerError(StatusCodes.UNAUTHORIZED, 'Invalid user');
+
         //set user to header
-        req.user = verifyUser;
+        req.user = user;
 
         //guard user
-        if (roles.length && !roles.includes(verifyUser.role)) {
+        if (roles.length && !roles.includes(user.role)) {
           throw new ApiError(
             StatusCodes.FORBIDDEN,
             "You don't have permission to access this api",

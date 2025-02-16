@@ -4,27 +4,16 @@ import path from 'path';
 import multer, { FileFilterCallback } from 'multer';
 import { StatusCodes } from 'http-status-codes';
 import ServerError from '../../errors/ServerError';
-import { ErrorRequestHandler, Request } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import deleteFile from '../../shared/deleteFile';
 import { catchAsyncWithCallback } from '../../shared/catchAsync';
 
 /**
- * Middleware for handling image uploads using multer.
+ * Image upload middleware using multer.
  *
- * @param {Function} callback - A callback function to be called after the images are uploaded.
- * The callback receives the request object and an array of image URLs.
- *
- * @returns Middleware function to handle image uploads.
- *
- * @example
- * // Usage in an Express route
- * app.post('/upload', imageUploader((req, images) => {
- *   console.log('Uploaded images:', images);
- * }), (req, res) => {
- *   res.send('Images uploaded successfully');
- * });
- *
- * @throws {ServerError} If the file upload fails or if the uploaded file is not an image.
+ * @param {Function} callback - A function to handle uploaded images.
+ * @param {boolean} [isOptional=false] - Whether image upload is optional.
+ * @returns {Function} Express middleware for handling image uploads.
  */
 const imageUploader = (
   callback: (req: Request, images: string[]) => void,
@@ -33,12 +22,12 @@ const imageUploader = (
   const baseUploadDir = path.join(process.cwd(), 'uploads');
 
   if (!fs.existsSync(baseUploadDir)) {
-    fs.mkdirSync(baseUploadDir);
+    fs.mkdirSync(baseUploadDir, { recursive: true });
   }
 
   const createDir = (dirPath: string) => {
     if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath);
+      fs.mkdirSync(dirPath, { recursive: true });
     }
   };
 
@@ -82,23 +71,31 @@ const imageUploader = (
 
   return catchAsyncWithCallback((req, res, next) => {
     upload(req, res, err => {
-      if (err)
+      if (err) {
         throw new ServerError(
           StatusCodes.BAD_REQUEST,
           err.message || 'File upload failed',
         );
+      }
 
-      const images: string[] =
-        (req.files as { images?: any })?.images?.map(
-          (file: { filename: string }) => `/images/${file.filename}`,
-        ) || [];
+      // eslint-disable-next-line no-undef
+      const uploadedImages = req.files as { images?: Express.Multer.File[] };
 
-      if (!images.length) {
+      if (
+        !uploadedImages ||
+        !uploadedImages.images ||
+        uploadedImages.images.length === 0
+      ) {
         if (!isOptional)
           throw new ServerError(StatusCodes.BAD_REQUEST, 'No images uploaded');
 
         return next();
       }
+
+      // Extract file paths
+      const images: string[] = uploadedImages.images.map(
+        file => `/images/${file.filename}`,
+      );
 
       callback(req, images);
       next();
@@ -106,18 +103,18 @@ const imageUploader = (
   }, imagesUploadRollback);
 };
 
-/** Middleware to ensure image rollbacks if an error occurs during the request handling */
-export const imagesUploadRollback: ErrorRequestHandler = (
-  err,
-  req,
-  _res,
-  next,
+/** Middleware for rolling back image uploads if an error occurs */
+export const imagesUploadRollback = (
+  err: any,
+  req: Request,
+  _res: Response,
+  next: NextFunction,
 ) => {
-  if (req.files && 'images' in req.files && Array.isArray(req.files.images))
+  if (req.files && 'images' in req.files && Array.isArray(req.files.images)) {
     req.files.images.forEach(
       async ({ filename }) => await deleteFile(`/images/${filename}`),
     );
-
+  }
   next(err);
 };
 

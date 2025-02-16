@@ -29,6 +29,10 @@ app.use(express.static('uploads'));
 //router
 app.use('/api/v1', router);
 
+//file retrieve
+app.use(express.static('uploads'));
+app.use('/api/v1', express.static('uploads'));
+
 //live response
 app.get('/', (req: Request, res: Response) => {
   res.sendFile(path.resolve(process.cwd(), 'index.html'));

@@ -18,11 +18,7 @@ router.post(
   UserControllers.createUser,
 );
 
-router.post(
-  '/login',
-  purifyRequest(AuthValidation.loginValidationSchema),
-  AuthController.login,
-);
+router.post('/login', AuthController.login);
 
 router.post('/logout', auth('USER'), AuthController.logout);
 

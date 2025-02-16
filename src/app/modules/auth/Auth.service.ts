@@ -1,5 +1,4 @@
 import User from '../user/User.model';
-import { TLoginUser } from './Auth.validation';
 import bcrypt from 'bcrypt';
 import { createToken, verifyToken } from './Auth.utils';
 import { TUser } from '../user/User.interface';
@@ -9,7 +8,13 @@ import ApiError from '../../../errors/ApiError';
 import { sendEmail } from '../../../helpers/sendMail';
 import config from '../../../config';
 
-const loginUser = async ({ email, password }: TLoginUser) => {
+const loginUser = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
   const user = await User.findOne({
     email,
   }).select('+password');

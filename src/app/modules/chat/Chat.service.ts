@@ -5,7 +5,7 @@ import ServerError from '../../../errors/ServerError';
 import { StatusCodes } from 'http-status-codes';
 
 export const ChatService = {
-  async reslove(req: Request) {
+  async resolve(req: Request) {
     const { target, name, image } = req.body;
     const userId = req.user._id;
 

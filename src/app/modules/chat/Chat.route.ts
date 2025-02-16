@@ -1,11 +1,21 @@
 import { Router } from 'express';
 import { ChatController } from './Chat.controller';
 import auth from '../../middlewares/auth';
+import imageUploader from '../../middlewares/imageUploader';
+import purifyRequest from '../../middlewares/purifyRequest';
+import { ChatValidation } from './Chat.validation';
 
 const router = Router();
 
 router.use(auth('ADMIN', 'USER'));
 
-router.post('/resolve', ChatController.resolve);
+router.post(
+  '/resolve',
+  imageUploader((req, images) => {
+    req.body.image = images[0];
+  }),
+  purifyRequest(ChatValidation.resolve),
+  ChatController.resolve,
+);
 
 export const ChatRoutes = router;

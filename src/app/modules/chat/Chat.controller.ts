@@ -21,4 +21,12 @@ export const ChatController = {
       data: chats,
     });
   }),
+
+  pop: catchAsync(async (req, res) => {
+    await ChatService.pop(req.params.chatId, req.user._id!);
+
+    serveResponse(res, {
+      message: 'Chat deleted successfully.',
+    });
+  }),
 };

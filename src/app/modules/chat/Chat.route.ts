@@ -20,4 +20,6 @@ router.post(
   ChatController.resolve,
 );
 
+router.delete('/:chatId/delete', ChatController.pop);
+
 export const ChatRoutes = router;

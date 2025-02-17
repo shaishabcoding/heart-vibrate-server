@@ -4,6 +4,7 @@ import User from '../user/User.model';
 import ServerError from '../../../errors/ServerError';
 import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
+import Message from '../message/Message.model';
 
 export const ChatService = {
   async resolve(req: Request) {
@@ -63,5 +64,18 @@ export const ChatService = {
         path: 'admins',
         select: 'name avatar _id',
       });
+  },
+
+  async pop(chatId: string, userId: Types.ObjectId) {
+    const chat = await Chat.findById(chatId);
+
+    if (!chat) throw new ServerError(StatusCodes.NOT_FOUND, 'Chat not found');
+
+    chat.users = chat.users.filter(id => !id.equals(userId));
+
+    if (chat.users.length < 2) {
+      await Chat.findByIdAndDelete(chatId);
+      await Message.deleteMany({ chat: chatId });
+    } else await chat.save();
   },
 };

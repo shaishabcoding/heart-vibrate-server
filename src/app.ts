@@ -5,6 +5,7 @@ import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import router from './routes';
 import { Morgan } from './shared/morgen';
 import path from 'path';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 
@@ -21,7 +22,9 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.text());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 //file retrieve
 app.use(express.static('uploads'));
@@ -34,7 +37,7 @@ app.use(express.static('uploads'));
 app.use('/api/v1', express.static('uploads'));
 
 //live response
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.sendFile(path.resolve(process.cwd(), 'index.html'));
 });
 

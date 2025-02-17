@@ -71,11 +71,31 @@ export const ChatService = {
 
     if (!chat) throw new ServerError(StatusCodes.NOT_FOUND, 'Chat not found');
 
+    // Remove the user from the chat
     chat.users = chat.users.filter(id => !id.equals(userId));
 
+    // If the chat has fewer than 2 users after removal, delete it
     if (chat.users.length < 2) {
       await Chat.findByIdAndDelete(chatId);
       await Message.deleteMany({ chat: chatId });
-    } else await chat.save();
+      return;
+    }
+
+    // If it's a group chat, check if the user is the only admin
+    if (chat.isGroup) {
+      const isAdmin = chat.admins.some(id => id.equals(userId));
+
+      if (isAdmin) {
+        // Remove the user from the admin list
+        chat.admins = chat.admins.filter(id => !id.equals(userId));
+
+        // If no other admins remain, assign a new one
+        if (chat.admins.length === 0 && chat.users.length > 0) {
+          chat.admins.push(chat.users[0]); // Assign the first user as the new admin
+        }
+      }
+    }
+
+    await chat.save();
   },
 };

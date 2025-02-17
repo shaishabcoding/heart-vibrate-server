@@ -20,25 +20,33 @@ router.post(
 
 router.post('/login', AuthController.login);
 
-router.post('/logout', auth('USER'), AuthController.logout);
+router.post('/logout', auth('USER', 'ADMIN'), AuthController.logout);
 
 router.patch(
   '/change-password',
-  auth('USER'),
+  auth('USER', 'ADMIN'),
   purifyRequest(AuthValidation.passwordChangeValidationSchema),
   AuthController.changePassword,
 );
 
-router.post('/forget-password', auth('USER'), AuthController.forgetPassword);
+router.post(
+  '/forget-password',
+  auth('USER', 'ADMIN'),
+  AuthController.forgetPassword,
+);
 
-router.post('/reset-password', auth('USER'), AuthController.resetPassword);
+router.post(
+  '/reset-password',
+  auth('USER', 'ADMIN'),
+  AuthController.resetPassword,
+);
 
 /**
  * generate new access token
  */
 router.get(
   '/refresh-token',
-  // purifyRequest(AuthValidation.refreshTokenValidationSchema),
+  purifyRequest(AuthValidation.refreshTokenValidationSchema),
   AuthController.refreshToken,
 );
 

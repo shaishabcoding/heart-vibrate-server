@@ -19,8 +19,8 @@ process.on('uncaughtException', error => {
 let server: any;
 async function main() {
   try {
-    seedAdmin();
-    mongoose.connect(config.database_url as string);
+    await mongoose.connect(config.database_url as string);
+    await seedAdmin();
     logger.info(colors.green('🚀 Database connected successfully'));
 
     const port =

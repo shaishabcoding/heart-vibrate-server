@@ -7,7 +7,7 @@ import { jwtHelper } from './jwtHelper';
 import User from '../app/modules/user/User.model';
 import chatSocket from '../app/modules/chat/Chat.socket';
 
-const socket = (io: Server) => {
+const useSocket = (io: Server) => {
   console.log(colors.green('Socket server initialized'));
 
   io.on('connection', async socket => {
@@ -52,4 +52,4 @@ const socket = (io: Server) => {
   });
 };
 
-export const socketHelper = { socket };
+export default useSocket;

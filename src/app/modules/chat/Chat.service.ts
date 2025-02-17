@@ -54,6 +54,14 @@ export const ChatService = {
   },
 
   async retrieve(userId: Types.ObjectId) {
-    return await Chat.find({ users: { $in: [userId] } });
+    return await Chat.find({ users: { $in: [userId] } })
+      .populate({
+        path: 'users',
+        select: 'name avatar _id',
+      })
+      .populate({
+        path: 'admins',
+        select: 'name avatar _id',
+      });
   },
 };

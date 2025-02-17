@@ -7,6 +7,20 @@ export const MessageService = {
   },
 
   async retrieve(chatId: string) {
-    return await Message.find({ chat: chatId }).sort('-createdAt');
+    return await Message.find({ chat: chatId })
+      .sort('-createdAt')
+      .select('-chat')
+      .populate({
+        path: 'sender',
+        select: 'name avatar _id',
+      })
+      .populate({
+        path: 'readBy',
+        select: 'name avatar _id',
+      })
+      .populate({
+        path: 'likedBy',
+        select: 'name avatar _id',
+      });
   },
 };

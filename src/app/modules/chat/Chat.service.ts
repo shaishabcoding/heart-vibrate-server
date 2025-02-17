@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 import Message from '../message/Message.model';
 import deleteFile from '../../../shared/deleteFile';
+import { TUser } from '../user/User.interface';
 
 export const ChatService = {
   async resolve(req: Request) {
@@ -56,7 +57,7 @@ export const ChatService = {
   },
 
   async retrieve(userId: Types.ObjectId) {
-    return await Chat.find({ users: { $in: [userId] } })
+    const chats = await Chat.find({ users: { $in: [userId] } })
       .populate({
         path: 'users',
         select: 'name avatar _id',
@@ -64,7 +65,25 @@ export const ChatService = {
       .populate({
         path: 'admins',
         select: 'name avatar _id',
-      });
+      })
+      .lean();
+
+    return chats.map(chat => {
+      if (!chat.isGroup) {
+        // Get the other participant (the one that is not the requesting user)
+        const otherUser = chat.users.find(
+          user => !user._id.equals(userId),
+        ) as Partial<TUser>;
+        if (otherUser) {
+          return {
+            ...chat,
+            name: `${otherUser.name?.firstName} ${otherUser.name?.lastName}`,
+            image: otherUser.avatar,
+          };
+        }
+      }
+      return chat;
+    });
   },
 
   async pop(chatId: string, userId: Types.ObjectId) {

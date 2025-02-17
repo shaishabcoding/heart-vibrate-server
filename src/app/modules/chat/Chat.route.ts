@@ -9,6 +9,8 @@ const router = Router();
 
 router.use(auth('ADMIN', 'USER'));
 
+router.get('/', ChatController.retrieve);
+
 router.post(
   '/resolve',
   imageUploader((req, images) => {
@@ -17,7 +19,5 @@ router.post(
   purifyRequest(ChatValidation.resolve),
   ChatController.resolve,
 );
-
-router.get('/retrieve', ChatController.retrieve);
 
 export const ChatRoutes = router;

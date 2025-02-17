@@ -113,7 +113,7 @@ export const AuthServices = {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Access Denied!');
     }
 
-    const { email } = verifyToken(token, 'refresh');
+    const { email } = verifyToken(token.split(' ')[0], 'refresh');
 
     const user = await User.findOne({
       email,

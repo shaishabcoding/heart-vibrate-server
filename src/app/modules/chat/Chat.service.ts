@@ -5,6 +5,7 @@ import ServerError from '../../../errors/ServerError';
 import { StatusCodes } from 'http-status-codes';
 import { Types } from 'mongoose';
 import Message from '../message/Message.model';
+import deleteFile from '../../../shared/deleteFile';
 
 export const ChatService = {
   async resolve(req: Request) {
@@ -76,6 +77,8 @@ export const ChatService = {
 
     // If the chat has fewer than 2 users after removal, delete it
     if (chat.users.length < 2) {
+      if (chat.image) await deleteFile(chat.image); // Delete the associated chat image
+
       await Chat.findByIdAndDelete(chatId);
       await Message.deleteMany({ chat: chatId });
       return;

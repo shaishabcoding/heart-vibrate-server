@@ -18,4 +18,6 @@ router.post(
   ChatController.resolve,
 );
 
+router.get('/retrieve', ChatController.retrieve);
+
 export const ChatRoutes = router;

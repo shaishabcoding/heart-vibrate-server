@@ -1,4 +1,4 @@
-import { catchAsyncWithCallback } from '../../../shared/catchAsync';
+import catchAsync, { catchAsyncWithCallback } from '../../../shared/catchAsync';
 import serveResponse from '../../../shared/serveResponse';
 import { imagesUploadRollback } from '../../middlewares/imageUploader';
 import { ChatService } from './Chat.service';
@@ -12,4 +12,13 @@ export const ChatController = {
       data: room,
     });
   }, imagesUploadRollback),
+
+  retrieve: catchAsync(async (req, res) => {
+    const chats = await ChatService.retrieve(req.user._id!);
+
+    serveResponse(res, {
+      message: 'Chats retrieve successfully.',
+      data: chats,
+    });
+  }),
 };

@@ -3,6 +3,7 @@ import Chat from './Chat.model';
 import User from '../user/User.model';
 import ServerError from '../../../errors/ServerError';
 import { StatusCodes } from 'http-status-codes';
+import { Types } from 'mongoose';
 
 export const ChatService = {
   async resolve(req: Request) {
@@ -50,5 +51,9 @@ export const ChatService = {
 
       return newGroupChat;
     }
+  },
+
+  async retrieve(userId: Types.ObjectId) {
+    return await Chat.find({ users: { $in: [userId] } });
   },
 };

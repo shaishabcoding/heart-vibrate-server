@@ -58,6 +58,7 @@ export const ChatService = {
 
   async retrieve(userId: Types.ObjectId) {
     const chats = await Chat.find({ users: { $in: [userId] } })
+      .sort('-updatedAt')
       .populate({
         path: 'users',
         select: 'name avatar _id',
@@ -76,11 +77,11 @@ export const ChatService = {
       { $group: { _id: '$chat', lastMessage: { $first: '$$ROOT' } } }, // Pick the latest per chat
     ]);
 
-    return chats.map(chat => {
+    return chats.map((chat: any) => {
       if (!chat.isGroup) {
         // Get the opposite user (the one that is not the requesting user)
         const otherUser = chat.users.find(
-          user => !user._id.equals(userId),
+          (user: any) => !user._id.equals(userId),
         ) as Partial<TUser>;
 
         if (otherUser) {

@@ -68,20 +68,53 @@ export const ChatService = {
       })
       .lean();
 
+    // Fetch the latest messages for all chats
+    const chatIds = chats.map(chat => chat._id);
+    const lastMessages = await Message.aggregate([
+      { $match: { chat: { $in: chatIds } } },
+      { $sort: { createdAt: -1 } }, // Get the newest message first
+      { $group: { _id: '$chat', lastMessage: { $first: '$$ROOT' } } }, // Pick the latest per chat
+    ]);
+
     return chats.map(chat => {
       if (!chat.isGroup) {
-        // Get the other participant (the one that is not the requesting user)
+        // Get the opposite user (the one that is not the requesting user)
         const otherUser = chat.users.find(
           user => !user._id.equals(userId),
         ) as Partial<TUser>;
+
         if (otherUser) {
-          return {
-            ...chat,
-            name: `${otherUser.name?.firstName} ${otherUser.name?.lastName}`,
-            image: otherUser.avatar,
-          };
+          chat.name = `${otherUser.name?.firstName} ${otherUser.name?.lastName}`;
+          chat.image = otherUser.avatar;
         }
       }
+
+      // Find the latest message for this chat
+      const lastMessageData = lastMessages.find(
+        msg => msg._id.toString() === chat._id.toString(),
+      );
+
+      if (lastMessageData) {
+        const lastMessage = lastMessageData.lastMessage;
+        const isSender = lastMessage.sender.toString() === userId.toString();
+
+        // Format lastMessage: "You: {message}" if sent by the current user
+        chat.lastMessage = isSender
+          ? `You: ${lastMessage.message}`
+          : lastMessage.message;
+
+        // Set message time
+        chat.lastMessageTime = lastMessage.createdAt;
+
+        // **📌 Mark as unread if not sent by the current user & not read**
+        chat.unRead = !isSender && !lastMessage.readBy.includes(userId);
+      } else {
+        // No last message
+        chat.lastMessage = '';
+        chat.lastMessageTime = null;
+        chat.unRead = false;
+      }
+
       return chat;
     });
   },

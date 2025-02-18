@@ -28,7 +28,6 @@ export const MessageService = {
           date: { $ifNull: ['$updatedAt', '$createdAt'] },
         },
       },
-      { $sort: { date: -1 } },
       {
         $lookup: {
           from: 'users',

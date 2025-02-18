@@ -27,12 +27,6 @@ const chatSchema = new Schema<IChat>(
         required: true,
       },
     ],
-    lastMessage: {
-      type: String,
-    },
-    lastMessageTime: {
-      type: Date,
-    },
   },
   {
     timestamps: true,

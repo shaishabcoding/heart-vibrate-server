@@ -6,6 +6,4 @@ export interface IChat extends Document {
   users: Types.ObjectId[];
   isGroup: boolean;
   admins: Types.ObjectId[];
-  lastMessage: string;
-  lastMessageTime: Date;
 }

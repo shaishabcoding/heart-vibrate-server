@@ -13,11 +13,20 @@ export const ChatController = {
     });
   }, imagesUploadRollback),
 
-  retrieve: catchAsync(async (req, res) => {
-    const chats = await ChatService.retrieve(req.user._id!);
+  list: catchAsync(async (req, res) => {
+    const chats = await ChatService.list(req.user._id!);
 
     serveResponse(res, {
       message: 'Chats retrieve successfully.',
+      data: chats,
+    });
+  }),
+
+  retrieve: catchAsync(async (req, res) => {
+    const chats = await ChatService.retrieve(req.user._id!, req.params.chatId);
+
+    serveResponse(res, {
+      message: 'Chat retrieve successfully.',
       data: chats,
     });
   }),

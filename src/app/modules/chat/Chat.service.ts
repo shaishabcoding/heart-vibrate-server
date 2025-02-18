@@ -57,7 +57,7 @@ export const ChatService = {
     }
   },
 
-  async retrieve(userId: Types.ObjectId) {
+  async list(userId: Types.ObjectId) {
     const chats = await Chat.find({ users: { $in: [userId] } })
       .sort('-updatedAt')
       .populate({
@@ -167,5 +167,34 @@ export const ChatService = {
     }
 
     await chat.save();
+  },
+
+  async retrieve(userId: Types.ObjectId, chatId: string) {
+    console.log(chatId);
+
+    const chat = await Chat.findById(chatId)
+      .populate({
+        path: 'users',
+        select: 'name avatar _id',
+      })
+      .populate({
+        path: 'admins',
+        select: 'name avatar _id',
+      });
+
+    if (!chat) throw new ServerError(StatusCodes.NOT_FOUND, 'Chat not found');
+
+    if (!chat.isGroup) {
+      const otherUser = chat.users.find(
+        (user: any) => !user._id.equals(userId),
+      ) as Partial<TUser>;
+
+      if (otherUser) {
+        chat.name = `${otherUser.name?.firstName} ${otherUser.name?.lastName}`;
+        chat.image = otherUser.avatar;
+      }
+    }
+
+    return chat;
   },
 };

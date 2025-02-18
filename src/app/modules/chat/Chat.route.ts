@@ -9,7 +9,8 @@ const router = Router();
 
 router.use(auth('ADMIN', 'USER'));
 
-router.get('/', ChatController.retrieve);
+router.get('/', ChatController.list);
+router.get('/:chatId', ChatController.retrieve);
 
 router.post(
   '/resolve',

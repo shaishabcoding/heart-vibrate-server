@@ -1,5 +1,9 @@
 /* eslint-disable no-console */
 import { DefaultEventsMap, Server, Socket } from 'socket.io';
+import Chat from './Chat.model';
+import { TUser } from '../user/User.interface';
+import Message from '../message/Message.model';
+import { Types } from 'mongoose';
 
 const chatSocket = (
   socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
@@ -9,7 +13,7 @@ const chatSocket = (
 
   // User subscribes to inbox updates
   socket.on('subscribeToInbox', () => {
-    const userEmail = socket.data.email; // Email is already validated in authentication
+    const userEmail = socket.data.user.email;
 
     socket.join(`inbox_${userEmail}`);
     console.log(`User subscribed to inbox: inbox_${userEmail}`);
@@ -22,36 +26,70 @@ const chatSocket = (
   });
 
   // Handle sending a private message
-  socket.on('sendMessage', async ({ recipientEmail, message, roomId }) => {
-    if (!recipientEmail || !message || !roomId) {
+  socket.on('sendMessage', async ({ message, roomId }) => {
+    if (!message || !roomId) {
       console.log(`Invalid message payload from: ${socket.id}`);
       return;
     }
 
-    const senderEmail = socket.data.email; // Use socket.data for security
-    const msgData = {
-      senderEmail,
-      recipientEmail,
-      message,
-      roomId,
-      timestamp: new Date(),
-    };
+    const senderEmail = socket.data.user.email;
+    const senderId = socket.data.user._id;
 
-    console.log(`New message from ${msgData.senderEmail} to ${recipientEmail}`);
+    console.log(`New message from ${senderEmail} to room: ${roomId}`);
 
     try {
-      // 📌 Notify recipient's inbox
-      io.to(`inbox_${recipientEmail}`).emit('inboxMessageReceived', {
-        roomId,
-        senderEmail: msgData.senderEmail,
+      // 📌 Find the chat room and populate users
+      const chat = await Chat.findById(roomId).populate(
+        'users',
+        'name avatar _id email',
+      );
+
+      if (!chat) {
+        console.log(`Chat room ${roomId} not found`);
+        return;
+      }
+
+      // const recipientEmails = (chat.users as unknown as TUser[]).map(
+      //   user => user.email,
+      // );
+
+      // 📌 Create the message and save it
+      const newMessage = await Message.create({
+        chat: roomId,
         message,
-        timestamp: msgData.timestamp,
+        sender: senderId,
       });
 
-      // 📌 Deliver message in the chat room
-      io.to(roomId).emit('chatMessageReceived', msgData);
+      // 📌 Update chat with last message and timestamp
+      await Chat.updateOne(
+        { _id: new Types.ObjectId(roomId as string) },
+        {
+          $set: {
+            lastMessage: message,
+            lastMessageTime: newMessage.createdAt,
+          },
+        },
+        {
+          new: true,
+        },
+      );
+
+      // 📌 Send notifications to inbox
+      await Promise.all(
+        (chat.users as unknown as TUser[]).map(({ email }) =>
+          io.to(`inbox_${email}`).emit('inboxMessageReceived', newMessage),
+        ),
+      );
+
+      // 📌 Broadcast message to chat room
+      io.to(roomId).emit('chatMessageReceived', {
+        sender: socket.data.user,
+        message,
+        _id: newMessage._id,
+        date: newMessage.createdAt,
+      });
     } catch (error) {
-      console.log(`Error sending message: ${error}`);
+      console.error(`Error sending message: ${error.message || error}`);
     }
   });
 

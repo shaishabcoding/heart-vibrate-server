@@ -24,7 +24,11 @@ const useSocket = (io: Server) => {
         token,
         config.jwt.jwt_secret as string,
       );
-      const user = await User.findOne({ email });
+
+      const user = await User.findOne({ email }).select(
+        'name avatar _id email',
+      );
+
       if (!user) {
         console.log(colors.red(`User not found, disconnecting: ${socket.id}`));
         socket.disconnect();
@@ -34,7 +38,7 @@ const useSocket = (io: Server) => {
       console.log(colors.blue(`User connected: ${user.email} (${socket.id})`));
 
       // Attach email to socket data for easy access
-      socket.data.email = email;
+      socket.data.user = user;
 
       // Attach chat socket events
       chatSocket(socket, io);

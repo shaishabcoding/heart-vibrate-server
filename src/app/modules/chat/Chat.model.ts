@@ -28,8 +28,10 @@ const chatSchema = new Schema<IChat>(
       },
     ],
     lastMessage: {
-      type: Schema.Types.ObjectId,
-      ref: 'Message',
+      type: String,
+    },
+    lastMessageTime: {
+      type: Date,
     },
   },
   {

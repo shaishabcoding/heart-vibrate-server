@@ -39,8 +39,6 @@ const messageSchema = new Schema<IMessage & Document>(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   },
 );
 

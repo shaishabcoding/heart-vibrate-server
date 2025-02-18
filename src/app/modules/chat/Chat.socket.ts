@@ -32,10 +32,9 @@ const chatSocket = (
       return;
     }
 
-    const senderEmail = socket.data.user.email;
-    const senderId = socket.data.user._id;
+    const { email, name, avatar, _id } = socket.data.user as TUser;
 
-    console.log(`New message from ${senderEmail} to room: ${roomId}`);
+    console.log(`New message from ${email} to room: ${roomId}`);
 
     try {
       // 📌 Find the chat room and populate users
@@ -53,7 +52,7 @@ const chatSocket = (
       const newMessage = await Message.create({
         chat: roomId,
         message,
-        sender: senderId,
+        sender: _id,
       });
 
       // 📌 Update chat with last message and timestamp
@@ -69,44 +68,20 @@ const chatSocket = (
         { new: true },
       );
 
-      // 📌 Determine Opposite User's Name for One-on-One Chats
-      let chatName = chat.name || 'Group Chat'; // Default to group name if available
-      let chatImage = chat.image || null; // Default to group image
-
-      if (!chat.isGroup) {
-        // Find the opposite user
-        const oppositeUser = chat.users.find(
-          user => user._id.toString() !== senderId.toString(),
-        );
-        if (oppositeUser) {
-          chatName = `${oppositeUser.name.firstName} ${oppositeUser.name.lastName}`;
-          chatImage = oppositeUser.avatar;
-        }
-      }
-
-      // 📌 Format chat details for inbox update
-      const formattedChat = {
-        _id: chat._id,
-        lastMessage: newMessage.message,
-        lastMessageTime: newMessage.createdAt,
-        name: chatName,
-        image: chatImage,
-      };
-
       // 📌 Notify each user in the inbox
       await Promise.all(
         (chat.users as unknown as TUser[]).map(({ email }) =>
-          io.to(`inbox_${email}`).emit('inboxMessageReceived', formattedChat),
+          io.to(`inbox_${email}`).emit('inboxMessageReceived'),
         ),
       );
 
       // 📌 Broadcast message to chat room
       io.to(roomId).emit('chatMessageReceived', {
         sender: {
-          _id: senderId,
-          name: socket.data.user.name,
-          avatar: socket.data.user.avatar,
-          email: socket.data.user.email,
+          _id,
+          name,
+          avatar,
+          email,
         },
         message,
         _id: newMessage._id,

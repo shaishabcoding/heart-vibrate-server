@@ -4,7 +4,10 @@ import { MessageService } from './Message.serviece';
 
 export const MessageController = {
   retrieve: catchAsync(async (req, res) => {
-    const messages = await MessageService.retrieve(req.query.chatId as string);
+    const messages = await MessageService.retrieve(
+      req.user._id!,
+      req.query.chatId as string,
+    );
 
     serveResponse(res, {
       message: 'Message retrieve Successfully.',

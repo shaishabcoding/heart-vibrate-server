@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import colors from 'colors';
+import http from 'http';
 import { Server } from 'socket.io';
 import { logger } from '../shared/logger';
 import config from '../config';
@@ -7,7 +8,10 @@ import { jwtHelper } from './jwtHelper';
 import User from '../app/modules/user/User.model';
 import chatSocket from '../app/modules/chat/Chat.socket';
 
-const useSocket = (io: Server) => {
+export let io: Server | null;
+
+const useSocket = (server: http.Server) => {
+  io = new Server(server, { cors: { origin: '*' } });
   console.log(colors.green('Socket server initialized'));
 
   io.on('connection', async socket => {
@@ -39,7 +43,7 @@ const useSocket = (io: Server) => {
       socket.data.user = user;
 
       // Attach chat socket events
-      chatSocket(socket, io);
+      chatSocket(socket, io!);
 
       // Handle disconnection
       socket.on('disconnect', () => {

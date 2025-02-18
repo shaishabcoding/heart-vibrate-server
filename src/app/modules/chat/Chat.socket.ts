@@ -71,7 +71,7 @@ const chatSocket = (
       // 📌 Notify each user in the inbox
       await Promise.all(
         (chat.users as unknown as TUser[]).map(({ email }) =>
-          io.to(`inbox_${email}`).emit('inboxMessageReceived'),
+          io.to(`inbox_${email}`).emit('inboxUpdated'),
         ),
       );
 
@@ -87,7 +87,7 @@ const chatSocket = (
         _id: newMessage._id,
         date: newMessage.createdAt,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error sending message: ${error.message || error}`);
     }
   });

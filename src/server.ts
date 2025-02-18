@@ -1,6 +1,5 @@
 import colors from 'colors';
 import mongoose from 'mongoose';
-import { Server } from 'socket.io';
 import http from 'http';
 import app from './app';
 import config from './config';
@@ -33,8 +32,7 @@ async function startServer(): Promise<void> {
     });
 
     // ✅ Initialize WebSocket
-    const io = new Server(server, { cors: { origin: '*' } });
-    useSocket(io);
+    useSocket(server);
   } catch (error) {
     errorLogger.error(colors.red('❌ Database connection failed!'), error);
     process.exit(1);

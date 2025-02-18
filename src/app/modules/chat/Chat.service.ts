@@ -7,6 +7,7 @@ import { Types } from 'mongoose';
 import Message from '../message/Message.model';
 import deleteFile from '../../../shared/deleteFile';
 import { TUser } from '../user/User.interface';
+import { io } from '../../../helpers/useSocket';
 
 export const ChatService = {
   async resolve(req: Request) {
@@ -121,7 +122,20 @@ export const ChatService = {
   },
 
   async pop(chatId: string, userId: Types.ObjectId) {
-    const chat = await Chat.findById(chatId);
+    const chat = await Chat.findById(chatId).populate(
+      'users',
+      '_id name avatar email',
+    );
+
+    if (!chat) throw new ServerError(StatusCodes.NOT_FOUND, 'Chat not found');
+
+    await Promise.all(
+      (chat.users as unknown as TUser[]).map(({ email }) =>
+        io!.to(`inbox_${email}`).emit('inboxUpdated'),
+      ),
+    );
+
+    io!.to(chatId).emit('chatUpdated');
 
     if (!chat) throw new ServerError(StatusCodes.NOT_FOUND, 'Chat not found');
 

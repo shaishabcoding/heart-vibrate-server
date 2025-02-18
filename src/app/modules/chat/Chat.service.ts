@@ -170,8 +170,6 @@ export const ChatService = {
   },
 
   async retrieve(userId: Types.ObjectId, chatId: string) {
-    console.log(chatId);
-
     const chat = await Chat.findById(chatId)
       .populate({
         path: 'users',

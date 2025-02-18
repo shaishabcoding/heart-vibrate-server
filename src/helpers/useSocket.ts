@@ -25,9 +25,7 @@ const useSocket = (io: Server) => {
         config.jwt.jwt_secret as string,
       );
 
-      const user = await User.findOne({ email }).select(
-        'name avatar _id email',
-      );
+      const user = await User.findOne({ email });
 
       if (!user) {
         console.log(colors.red(`User not found, disconnecting: ${socket.id}`));

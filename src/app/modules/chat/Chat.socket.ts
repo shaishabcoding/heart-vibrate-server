@@ -41,17 +41,13 @@ const chatSocket = (
       // 📌 Find the chat room and populate users
       const chat = await Chat.findById(roomId).populate(
         'users',
-        'name avatar _id email',
+        '_id name avatar email',
       );
 
       if (!chat) {
         console.log(`Chat room ${roomId} not found`);
         return;
       }
-
-      // const recipientEmails = (chat.users as unknown as TUser[]).map(
-      //   user => user.email,
-      // );
 
       // 📌 Create the message and save it
       const newMessage = await Message.create({
@@ -65,25 +61,53 @@ const chatSocket = (
         { _id: new Types.ObjectId(roomId as string) },
         {
           $set: {
-            lastMessage: message,
+            lastMessage:
+              message.length > 20 ? `${message.slice(0, 20)}...` : message,
             lastMessageTime: newMessage.createdAt,
           },
         },
-        {
-          new: true,
-        },
+        { new: true },
       );
 
-      // 📌 Send notifications to inbox
+      // 📌 Determine Opposite User's Name for One-on-One Chats
+      let chatName = chat.name || 'Group Chat'; // Default to group name if available
+      let chatImage = chat.image || null; // Default to group image
+
+      if (!chat.isGroup) {
+        // Find the opposite user
+        const oppositeUser = chat.users.find(
+          user => user._id.toString() !== senderId.toString(),
+        );
+        if (oppositeUser) {
+          chatName = `${oppositeUser.name.firstName} ${oppositeUser.name.lastName}`;
+          chatImage = oppositeUser.avatar;
+        }
+      }
+
+      // 📌 Format chat details for inbox update
+      const formattedChat = {
+        _id: chat._id,
+        lastMessage: newMessage.message,
+        lastMessageTime: newMessage.createdAt,
+        name: chatName,
+        image: chatImage,
+      };
+
+      // 📌 Notify each user in the inbox
       await Promise.all(
         (chat.users as unknown as TUser[]).map(({ email }) =>
-          io.to(`inbox_${email}`).emit('inboxMessageReceived', newMessage),
+          io.to(`inbox_${email}`).emit('inboxMessageReceived', formattedChat),
         ),
       );
 
       // 📌 Broadcast message to chat room
       io.to(roomId).emit('chatMessageReceived', {
-        sender: socket.data.user,
+        sender: {
+          _id: senderId,
+          name: socket.data.user.name,
+          avatar: socket.data.user.avatar,
+          email: socket.data.user.email,
+        },
         message,
         _id: newMessage._id,
         date: newMessage.createdAt,

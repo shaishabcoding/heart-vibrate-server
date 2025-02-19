@@ -20,7 +20,7 @@ router.post(
 
 router.post('/login', AuthController.login);
 
-router.post('/logout', auth('USER', 'ADMIN'), AuthController.logout);
+router.post('/logout', AuthController.logout);
 
 router.patch(
   '/change-password',

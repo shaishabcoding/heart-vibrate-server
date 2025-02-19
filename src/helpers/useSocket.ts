@@ -53,6 +53,7 @@ const useSocket = (server: http.Server) => {
       });
     } catch (error) {
       console.log(colors.red('Authentication error:'), colors.red('' + error));
+      socket.emit('tokenExpired');
       socket.disconnect();
     }
   });

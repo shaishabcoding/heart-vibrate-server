@@ -10,6 +10,8 @@ import chatSocket from '../app/modules/chat/Chat.socket';
 
 export let io: Server | null;
 
+const onlineUsers = new Set<string>();
+
 const useSocket = (server: http.Server) => {
   io = new Server(server, { cors: { origin: '*' } });
   console.log(colors.green('Socket server initialized'));
@@ -42,6 +44,10 @@ const useSocket = (server: http.Server) => {
       // Attach email to socket data for easy access
       socket.data.user = user;
 
+      onlineUsers.add(email);
+
+      io?.emit('onlineUsers', Array.from(onlineUsers));
+
       // Attach chat socket events
       chatSocket(socket, io!);
 
@@ -50,6 +56,8 @@ const useSocket = (server: http.Server) => {
         logger.info(
           colors.red(`User disconnected: ${user.email} (${socket.id})`),
         );
+        onlineUsers.delete(email);
+        io?.emit('onlineUsers', Array.from(onlineUsers));
       });
     } catch (error) {
       console.log(colors.red('Authentication error:'), colors.red('' + error));

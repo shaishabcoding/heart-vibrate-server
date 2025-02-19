@@ -1,7 +1,7 @@
-import { model, Schema, Document } from 'mongoose';
+import { model, Schema } from 'mongoose';
 import { IMessage } from './Message.interface';
 
-const messageSchema = new Schema<IMessage & Document>(
+const messageSchema = new Schema<IMessage>(
   {
     chat: {
       type: Schema.Types.ObjectId,

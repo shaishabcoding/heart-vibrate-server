@@ -92,6 +92,43 @@ const chatSocket = (
     }
   });
 
+  socket.on('markMessageAsRead', async ({ messageId, chatId }) => {
+    if (!messageId || !chatId) {
+      console.log(`Invalid read receipt payload from: ${socket.id}`);
+      return;
+    }
+
+    const { _id: userId } = socket.data.user as TUser;
+    console.log(
+      `Read message by : ${userId} from message: ${messageId} in chat: ${chatId}`,
+    );
+
+    try {
+      // 📌 Mark the message as read by the user
+      const message = await Message.findById(messageId);
+
+      if (!message) {
+        console.log(`Message ${messageId} not found`);
+        return;
+      }
+
+      if (
+        !message.readBy.map(id => id.toString()).includes(userId!.toString())
+      ) {
+        message.readBy.push(new Types.ObjectId(userId));
+        await message.save();
+      }
+
+      // 📌 Notify all users in the chat about the read receipt
+      io.to(chatId).emit('messageRead', { messageId, userId });
+
+      // 📌 Notify inbox users (optional)
+      io.to(`inbox_${socket.data.user.email}`).emit('inboxUpdated');
+    } catch (error: any) {
+      console.error(`Error marking message as read: ${error.message || error}`);
+    }
+  });
+
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);

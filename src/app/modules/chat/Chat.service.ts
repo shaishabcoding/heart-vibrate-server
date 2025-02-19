@@ -58,61 +58,60 @@ export const ChatService = {
   },
 
   async list(userId: Types.ObjectId) {
-    const chats = await Chat.find({ users: { $in: [userId] } })
+    // Fetch chats where the user is a participant
+    const chats = await Chat.find({ users: userId })
       .sort('-updatedAt')
-      .populate({
-        path: 'users',
-        select: 'name email avatar _id',
-      })
-      .populate({
-        path: 'admins',
-        select: 'name avatar _id',
-      })
+      .populate({ path: 'users', select: 'name email avatar _id' })
+      .populate({ path: 'admins', select: 'name avatar _id' })
       .lean();
 
-    // Fetch the latest messages for all chats
+    if (!chats.length) return [];
+
+    // Get chat IDs
     const chatIds = chats.map(chat => chat._id);
+
+    // Fetch the latest messages for each chat
     const lastMessages = await Message.aggregate([
       { $match: { chat: { $in: chatIds } } },
-      { $sort: { createdAt: -1 } }, // Get the newest message first
-      { $group: { _id: '$chat', lastMessage: { $first: '$$ROOT' } } }, // Pick the latest per chat
+      { $sort: { createdAt: -1 } },
+      { $group: { _id: '$chat', lastMessage: { $first: '$$ROOT' } } },
+      {
+        $project: {
+          _id: 1,
+          'lastMessage.message': 1,
+          'lastMessage.sender': 1,
+          'lastMessage.createdAt': 1,
+          'lastMessage.readBy': 1,
+        },
+      },
     ]);
 
-    return chats.map((chat: any) => {
-      if (!chat.isGroup) {
-        // Get the opposite user (the one that is not the requesting user)
-        const otherUser = chat.users.find(
-          (user: any) => !user._id.equals(userId),
-        ) as Partial<TUser>;
+    // Convert messages into a Map for quick lookup
+    const lastMessageMap = new Map(
+      lastMessages.map(msg => [msg._id.toString(), msg.lastMessage]),
+    );
 
+    return chats.map(chat => {
+      if (!chat.isGroup) {
+        const otherUser = chat.users.find(user => !user._id.equals(userId));
         if (otherUser) {
-          chat.name = `${otherUser.name?.firstName} ${otherUser.name?.lastName}`;
+          chat.name =
+            `${otherUser.name?.firstName ?? ''} ${otherUser.name?.lastName ?? ''}`.trim();
           chat.image = otherUser.avatar;
           chat.sender = otherUser.email;
         }
       }
 
-      // Find the latest message for this chat
-      const lastMessageData = lastMessages.find(
-        msg => msg._id.toString() === chat._id.toString(),
-      );
-
-      if (lastMessageData) {
-        const lastMessage = lastMessageData.lastMessage;
-        const isSender = lastMessage.sender.toString() === userId.toString();
-
-        // Format lastMessage: "You: {message}" if sent by the current user
+      const lastMessage = lastMessageMap.get(chat._id.toString());
+      if (lastMessage) {
+        const isSender = lastMessage.sender.equals(userId);
         chat.lastMessage = isSender
           ? `You: ${lastMessage.message}`
           : lastMessage.message;
-
-        // Set message time
         chat.lastMessageTime = lastMessage.createdAt;
-
-        // **📌 Mark as unread if not sent by the current user & not read**
-        chat.unRead = !isSender && !lastMessage.readBy.includes(userId);
+        chat.unRead =
+          !isSender && !lastMessage.readBy?.some(id => id.equals(userId));
       } else {
-        // No last message
         chat.lastMessage = '';
         chat.lastMessageTime = null;
         chat.unRead = false;

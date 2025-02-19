@@ -4,7 +4,6 @@ import { StatusCodes } from 'http-status-codes';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import router from './routes';
 import { Morgan } from './shared/morgen';
-import path from 'path';
 import cookieParser from 'cookie-parser';
 
 const app = express();
@@ -38,7 +37,7 @@ app.use('/api/v1', express.static('uploads'));
 
 //live response
 app.get('/', (_req: Request, res: Response) => {
-  res.sendFile(path.resolve(process.cwd(), 'index.html'));
+  res.redirect('http://localhost:5173');
 });
 
 //global error handle

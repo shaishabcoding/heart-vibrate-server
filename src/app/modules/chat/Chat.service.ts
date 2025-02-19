@@ -62,7 +62,7 @@ export const ChatService = {
       .sort('-updatedAt')
       .populate({
         path: 'users',
-        select: 'name avatar _id',
+        select: 'name email avatar _id',
       })
       .populate({
         path: 'admins',
@@ -88,6 +88,7 @@ export const ChatService = {
         if (otherUser) {
           chat.name = `${otherUser.name?.firstName} ${otherUser.name?.lastName}`;
           chat.image = otherUser.avatar;
+          chat.sender = otherUser.email;
         }
       }
 

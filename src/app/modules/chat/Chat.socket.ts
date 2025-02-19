@@ -86,6 +86,7 @@ const chatSocket = (
         message,
         _id: newMessage._id,
         date: newMessage.createdAt,
+        chatId: roomId,
       });
     } catch (error: any) {
       console.error(`Error sending message: ${error.message || error}`);

@@ -93,40 +93,39 @@ const chatSocket = (
     }
   });
 
-  socket.on('markMessageAsRead', async ({ messageId, chatId }) => {
-    if (!messageId || !chatId) {
+  socket.on('markAllMessagesAsRead', async ({ chatId }) => {
+    if (!chatId) {
       console.log(`Invalid read receipt payload from: ${socket.id}`);
       return;
     }
 
     const { _id: userId } = socket.data.user as TUser;
-    console.log(
-      `Read message by : ${userId} from message: ${messageId} in chat: ${chatId}`,
-    );
 
     try {
-      // 📌 Mark the message as read by the user
-      const message = await Message.findById(messageId);
+      // 📌 Update all unread messages in the chat
+      const result = await Message.updateMany(
+        {
+          chat: chatId,
+          readBy: { $ne: userId }, // Only update messages the user hasn't read
+        },
+        {
+          $addToSet: { readBy: userId }, // Add user to readBy array if not present
+        },
+      );
 
-      if (!message) {
-        console.log(`Message ${messageId} not found`);
-        return;
-      }
+      console.log(
+        `Marked ${result.modifiedCount} messages as read in chat: ${chatId}`,
+      );
 
-      if (
-        !message.readBy.map(id => id.toString()).includes(userId!.toString())
-      ) {
-        message.readBy.push(new Types.ObjectId(userId));
-        await message.save();
-      }
-
-      // 📌 Notify all users in the chat about the read receipt
-      io.to(chatId).emit('messageRead', { messageId, userId });
+      // 📌 Notify all users in the chat about the read receipts
+      io.to(chatId).emit('allMessagesRead', { chatId, userId });
 
       // 📌 Notify inbox users (optional)
       io.to(`inbox_${socket.data.user.email}`).emit('inboxUpdated');
     } catch (error: any) {
-      console.error(`Error marking message as read: ${error.message || error}`);
+      console.error(
+        `Error marking messages as read: ${error.message || error}`,
+      );
     }
   });
 

@@ -88,9 +88,30 @@ export const ChatService = {
       },
     ]);
 
+    // Fetch unread message count per chat
+    const unreadCounts = await Message.aggregate([
+      {
+        $match: {
+          chat: { $in: chatIds },
+          readBy: { $ne: userId }, // Messages that have NOT been read by user
+        },
+      },
+      {
+        $group: {
+          _id: '$chat',
+          unreadCount: { $sum: 1 }, // Count unread messages
+        },
+      },
+    ]);
+
     // Convert messages into a Map for quick lookup
     const lastMessageMap = new Map(
       lastMessages.map(msg => [msg._id.toString(), msg.lastMessage]),
+    );
+
+    // Convert unread counts into a Map for quick lookup
+    const unreadCountMap = new Map(
+      unreadCounts.map(count => [count._id.toString(), count.unreadCount]),
     );
 
     return chats.map((chat: any) => {
@@ -121,6 +142,9 @@ export const ChatService = {
         chat.lastMessageTime = null;
         chat.unRead = false;
       }
+
+      // Add unread count for each chat
+      chat.unreadCount = unreadCountMap.get(chat._id.toString()) || 0;
 
       return chat;
     });

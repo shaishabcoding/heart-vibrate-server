@@ -113,14 +113,12 @@ const chatSocket = (
         },
       );
 
+      if (!result.modifiedCount) return;
+
       console.log(
         `Marked ${result.modifiedCount} messages as read in chat: ${chatId}`,
       );
 
-      // 📌 Notify all users in the chat about the read receipts
-      io.to(chatId).emit('allMessagesRead', { chatId, userId });
-
-      // 📌 Notify inbox users (optional)
       io.to(`inbox_${socket.data.user.email}`).emit('inboxUpdated');
     } catch (error: any) {
       console.error(

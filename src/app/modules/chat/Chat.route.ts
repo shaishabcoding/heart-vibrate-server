@@ -21,6 +21,15 @@ router.post(
   ChatController.resolve,
 );
 
+router.patch(
+  '/:chatId/edit',
+  imageUploader((req, images) => {
+    req.body.image = images[0];
+  }, true),
+  purifyRequest(ChatValidation.update),
+  ChatController.update,
+);
+
 router.delete('/:chatId/delete', ChatController.pop);
 
 export const ChatRoutes = router;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request } from 'express';
 import Chat from './Chat.model';
 import User from '../user/User.model';
@@ -8,6 +9,7 @@ import Message from '../message/Message.model';
 import deleteFile from '../../../shared/deleteFile';
 import { TUser } from '../user/User.interface';
 import { io } from '../../../helpers/useSocket';
+import { IChat } from './Chat.interface';
 
 export const ChatService = {
   async resolve(req: Request) {
@@ -91,9 +93,11 @@ export const ChatService = {
       lastMessages.map(msg => [msg._id.toString(), msg.lastMessage]),
     );
 
-    return chats.map(chat => {
+    return chats.map((chat: any) => {
       if (!chat.isGroup) {
-        const otherUser = chat.users.find(user => !user._id.equals(userId));
+        const otherUser = chat.users.find(
+          (user: any) => !user._id.equals(userId),
+        );
         if (otherUser) {
           chat.name =
             `${otherUser.name?.firstName ?? ''} ${otherUser.name?.lastName ?? ''}`.trim();
@@ -110,7 +114,8 @@ export const ChatService = {
           : lastMessage.message;
         chat.lastMessageTime = lastMessage.createdAt;
         chat.unRead =
-          !isSender && !lastMessage.readBy?.some(id => id.equals(userId));
+          !isSender &&
+          !lastMessage.readBy?.some((id: any) => id.equals(userId));
       } else {
         chat.lastMessage = '';
         chat.lastMessageTime = null;
@@ -194,5 +199,22 @@ export const ChatService = {
     }
 
     return chat;
+  },
+
+  async update(chatId: string, chat: Partial<IChat>) {
+    const updatedChat = await Chat.findByIdAndUpdate(chatId, chat, {
+      new: true,
+    }).populate('users', 'email');
+
+    if (!updatedChat)
+      throw new ServerError(StatusCodes.NOT_FOUND, 'Chat not found');
+
+    await Promise.all(
+      (updatedChat.users as unknown as TUser[]).map(({ email }) =>
+        io!.to(`inbox_${email}`).emit('inboxUpdated'),
+      ),
+    );
+
+    return updatedChat;
   },
 };

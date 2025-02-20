@@ -13,6 +13,15 @@ export const ChatController = {
     });
   }, imagesUploadRollback),
 
+  update: catchAsyncWithCallback(async (req, res) => {
+    const updatedChat = await ChatService.update(req.params.chatId, req.body);
+
+    serveResponse(res, {
+      message: 'Chat updated successfully.',
+      data: updatedChat,
+    });
+  }, imagesUploadRollback),
+
   list: catchAsync(async (req, res) => {
     const chats = await ChatService.list(req.user._id!);
 

@@ -61,7 +61,8 @@ export const MessageService = {
           readBy: { name: 1, avatar: 1, _id: 1 },
           likedBy: { name: 1, avatar: 1, _id: 1 },
           date: 1,
-          message: 1,
+          content: 1,
+          type: 1,
         },
       },
     ]);

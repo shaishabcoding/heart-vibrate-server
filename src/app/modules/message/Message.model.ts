@@ -9,10 +9,15 @@ const messageSchema = new Schema<IMessage>(
       required: true,
       index: true,
     },
-    message: {
+    content: {
       type: String,
       required: true,
       trim: true,
+    },
+    type: {
+      type: String,
+      required: true,
+      default: 'text',
     },
     sender: {
       type: Schema.Types.ObjectId,

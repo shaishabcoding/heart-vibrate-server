@@ -3,7 +3,7 @@ import { DefaultEventsMap, Server, Socket } from 'socket.io';
 import Chat from './Chat.model';
 import { TUser } from '../user/User.interface';
 import Message from '../message/Message.model';
-import { Types } from 'mongoose';
+import base64FileUploader from '../../../shared/base64FileUploader';
 
 const chatSocket = (
   socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
@@ -26,8 +26,8 @@ const chatSocket = (
   });
 
   // Handle sending a private message
-  socket.on('sendMessage', async ({ message, roomId }) => {
-    if (!message || !roomId) {
+  socket.on('sendMessage', async ({ content, type = 'text', roomId }) => {
+    if (!content || !roomId) {
       console.log(`Invalid message payload from: ${socket.id}`);
       return;
     }
@@ -48,24 +48,33 @@ const chatSocket = (
         return;
       }
 
+      if (type !== 'text') {
+        const result = base64FileUploader(content, type);
+
+        if (!result.success) {
+          console.log(result.error);
+          return;
+        }
+
+        content = result.filePath;
+      }
+
       // 📌 Create the message and save it
       const newMessage = await Message.create({
         chat: roomId,
-        message,
+        content,
+        type,
         sender: _id,
       });
 
-      // 📌 Update chat with last message and timestamp
-      await Chat.updateOne(
-        { _id: new Types.ObjectId(roomId as string) },
-        {
-          $set: {
-            lastMessage:
-              message.length > 20 ? `${message.slice(0, 20)}...` : message,
-            lastMessageTime: newMessage.createdAt,
-          },
-        },
-        { new: true },
+      console.log(
+        `last message is ${
+          type !== 'text'
+            ? type
+            : content.length > 20
+              ? `${content.slice(0, 20)}...`
+              : content
+        }`,
       );
 
       // 📌 Notify each user in the inbox
@@ -83,7 +92,8 @@ const chatSocket = (
           avatar,
           email,
         },
-        message,
+        content,
+        type,
         _id: newMessage._id,
         date: newMessage.createdAt,
         chatId: roomId,

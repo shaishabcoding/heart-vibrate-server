@@ -80,9 +80,10 @@ export const ChatService = {
       {
         $project: {
           _id: 1,
-          'lastMessage.message': 1,
+          'lastMessage.content': 1,
+          'lastMessage.type': 1,
           'lastMessage.sender': 1,
-          'lastMessage.createdAt': 1,
+          'lastMessage.updatedAt': 1,
           'lastMessage.readBy': 1,
         },
       },
@@ -131,9 +132,11 @@ export const ChatService = {
       if (lastMessage) {
         const isSender = lastMessage.sender.equals(userId);
         chat.lastMessage = isSender
-          ? `You: ${lastMessage.message}`
-          : lastMessage.message;
-        chat.lastMessageTime = lastMessage.createdAt;
+          ? `You: ${lastMessage.type !== 'text' ? lastMessage.type : lastMessage.content}`
+          : lastMessage.type !== 'text'
+            ? lastMessage.type
+            : lastMessage.content;
+        chat.lastMessageTime = lastMessage.updatedAt;
         chat.unRead =
           !isSender &&
           !lastMessage.readBy?.some((id: any) => id.equals(userId));

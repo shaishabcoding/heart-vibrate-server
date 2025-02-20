@@ -3,7 +3,7 @@ import { DefaultEventsMap, Server, Socket } from 'socket.io';
 import Chat from './Chat.model';
 import { TUser } from '../user/User.interface';
 import Message from '../message/Message.model';
-import base64FileUploader from '../../../shared/base64FileUploader';
+import saveChunkedFile from '../../../shared/saveChunkedFile';
 
 const chatSocket = (
   socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
@@ -26,82 +26,104 @@ const chatSocket = (
   });
 
   // Handle sending a private message
-  socket.on('sendMessage', async ({ content, type = 'text', roomId }) => {
-    if (!content || !roomId) {
-      console.log(`Invalid message payload from: ${socket.id}`);
-      return;
-    }
-
-    const { email, name, avatar, _id } = socket.data.user as TUser;
-
-    console.log(`New message from ${email} to room: ${roomId}`);
-
-    try {
-      // 📌 Find the chat room and populate users
-      const chat = await Chat.findById(roomId).populate(
-        'users',
-        '_id name avatar email',
-      );
-
-      if (!chat) {
-        console.log(`Chat room ${roomId} not found`);
+  socket.on(
+    'sendMessage',
+    async ({
+      content,
+      type = 'text',
+      roomId,
+      chunkIndex,
+      totalChunks,
+      isLastChunk,
+    }) => {
+      if (!content || !roomId) {
+        console.log(`❌ Invalid message payload from: ${socket.id}`);
         return;
       }
 
-      if (type !== 'text') {
-        const result = base64FileUploader(content, type);
+      const { email, name, avatar, _id } = socket.data.user as TUser;
 
-        if (!result.success) {
-          console.log(result.error);
+      console.log(
+        `✅ Chunk ${chunkIndex + 1}/${totalChunks} received from ${email} to room: ${roomId}`,
+      );
+
+      try {
+        const chat = await Chat.findById(roomId).populate(
+          'users',
+          '_id name avatar email',
+        );
+        if (!chat) {
+          console.log(`❌ Chat room ${roomId} not found`);
           return;
         }
 
-        content = result.filePath;
+        let filePath = content;
+
+        if (type !== 'text') {
+          // 📌 Store video chunks and wait for complete file
+          const result = saveChunkedFile(
+            content,
+            roomId,
+            type,
+            chunkIndex,
+            totalChunks,
+          );
+
+          if (!result.success) {
+            console.log(result.error);
+            return;
+          }
+
+          if (!isLastChunk) {
+            return; // Wait until the last chunk before creating the message
+          }
+
+          filePath = result.filePath;
+
+          if (!filePath) {
+            console.error(
+              `❌ Error: File path is missing after saving. Message cannot be created.`,
+            );
+            return;
+          }
+        }
+
+        // 🔥 **Ensure filePath exists before creating the message**
+        console.log(`✅ File path received: ${filePath}`);
+
+        // 📌 Create the message after file is fully received
+        const newMessage = await Message.create({
+          chat: roomId,
+          content: filePath,
+          type,
+          sender: _id,
+        });
+
+        console.log(`🔥 Message saved successfully: ${filePath}`);
+
+        // 📌 Notify inbox users
+        await Promise.all(
+          (chat.users as unknown as TUser[]).map(({ email }) =>
+            io.to(`inbox_${email}`).emit('inboxUpdated'),
+          ),
+        );
+
+        // 📌 Broadcast the completed message
+        io.to(roomId).emit('chatMessageReceived', {
+          sender: { _id, name, avatar, email },
+          content: filePath,
+          type,
+          _id: newMessage._id,
+          date: newMessage.createdAt,
+          chatId: roomId,
+        });
+
+        console.log(`🚀 New message sent successfully to room ${roomId}`);
+      } catch (error: any) {
+        console.error(`❌ Error sending message: ${error.message || error}`);
       }
-
-      // 📌 Create the message and save it
-      const newMessage = await Message.create({
-        chat: roomId,
-        content,
-        type,
-        sender: _id,
-      });
-
-      console.log(
-        `last message is ${
-          type !== 'text'
-            ? type
-            : content.length > 20
-              ? `${content.slice(0, 20)}...`
-              : content
-        }`,
-      );
-
-      // 📌 Notify each user in the inbox
-      await Promise.all(
-        (chat.users as unknown as TUser[]).map(({ email }) =>
-          io.to(`inbox_${email}`).emit('inboxUpdated'),
-        ),
-      );
-
-      // 📌 Broadcast message to chat room
-      io.to(roomId).emit('chatMessageReceived', {
-        sender: {
-          _id,
-          name,
-          avatar,
-          email,
-        },
-        content,
-        type,
-        _id: newMessage._id,
-        date: newMessage.createdAt,
-        chatId: roomId,
-      });
-    } catch (error: any) {
-      console.error(`Error sending message: ${error.message || error}`);
-    }
-  });
+    },
+  );
 
   socket.on('markAllMessagesAsRead', async ({ chatId }) => {
     if (!chatId) {

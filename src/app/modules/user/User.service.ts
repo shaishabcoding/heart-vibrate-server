@@ -4,6 +4,7 @@ import { userSearchableFields } from './User.constant';
 import QueryBuilder from '../../builder/QueryBuilder';
 
 const createUser = async (user: Partial<TUser>) => await User.create(user);
+
 const getAllUser = async (query: Record<string, unknown>) => {
   const userQuery = new QueryBuilder(User.find(), query)
     .search(userSearchableFields)
@@ -12,16 +13,31 @@ const getAllUser = async (query: Record<string, unknown>) => {
     .paginate()
     .fields();
 
-  // const meta = await userQuery.countTotal();
+  const total = await User.countDocuments();
   const users = await userQuery.modelQuery.exec();
 
   return {
-    // meta,
+    meta: {
+      total,
+    },
     users,
   };
+};
+
+const userList = async (name: string, removeId: string) => {
+  const users = await User.find({
+    $or: [
+      { 'name.firstName': new RegExp(name, 'i') },
+      { 'name.lastName': new RegExp(name, 'i') },
+    ],
+    _id: { $ne: removeId },
+  }).select('_id avatar name');
+
+  return users;
 };
 
 export const UserServices = {
   createUser,
   getAllUser,
+  userList,
 };

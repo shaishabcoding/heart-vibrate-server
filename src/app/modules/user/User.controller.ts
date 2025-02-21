@@ -29,13 +29,6 @@ const createUser: RequestHandler = catchAsync(async ({ body }, res) => {
     httpOnly: true,
   });
 
-  console.log({
-    success: true,
-    statusCode: StatusCodes.CREATED,
-    message: 'User created successfully!',
-    data: { token: accessToken, user },
-  });
-
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.CREATED,
@@ -54,7 +47,22 @@ const getAllUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const userList: RequestHandler = catchAsync(async (req, res) => {
+  const users = await UserServices.userList(
+    req.query.search as string,
+    req.query.removeId as string,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Users are retrieved successfully!',
+    data: users,
+  });
+});
+
 export const UserControllers = {
   createUser,
   getAllUser,
+  userList,
 };

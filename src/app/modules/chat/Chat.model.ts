@@ -5,7 +5,9 @@ const chatSchema = new Schema<IChat>(
   {
     name: {
       type: String,
-      required: true,
+    },
+    image: {
+      type: String,
     },
     users: [
       {
@@ -25,10 +27,6 @@ const chatSchema = new Schema<IChat>(
         required: true,
       },
     ],
-    lastMessage: {
-      type: Schema.Types.ObjectId,
-      ref: 'Message',
-    },
   },
   {
     timestamps: true,

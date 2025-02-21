@@ -7,20 +7,38 @@ const messageSchema = new Schema<IMessage>(
       type: Schema.Types.ObjectId,
       ref: 'Chat',
       required: true,
+      index: true,
     },
-    message: {
+    content: {
       type: String,
       required: true,
+      trim: true,
+    },
+    type: {
+      type: String,
+      required: true,
+      default: 'text',
     },
     sender: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
     readBy: [
       {
         type: Schema.Types.ObjectId,
         ref: 'User',
+        default: [],
+        index: true,
+      },
+    ],
+    likedBy: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        default: [],
+        index: true,
       },
     ],
   },

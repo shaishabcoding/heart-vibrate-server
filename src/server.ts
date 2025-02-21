@@ -1,70 +1,57 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-undef */
 import colors from 'colors';
 import mongoose from 'mongoose';
-import { Server } from 'socket.io';
+import http from 'http';
 import app from './app';
 import config from './config';
-import { socketHelper } from './helpers/socketHelper';
 import { errorLogger, logger } from './shared/logger';
 import seedAdmin from './DB';
+import useSocket from './helpers/useSocket';
 
-//uncaught exception
+// Global reference for the server
+let server: http.Server | null = null;
+
+// ✅ Handle uncaught exceptions
 process.on('uncaughtException', error => {
-  errorLogger.error('UnhandleException Detected', error);
+  errorLogger.error(colors.red('💥 Uncaught Exception:'), error);
   process.exit(1);
 });
 
-let server: any;
-async function main() {
+// ✅ Start the server
+async function startServer(): Promise<void> {
   try {
-    seedAdmin();
-    mongoose.connect(config.database_url as string);
+    // ✅ Connect to the database
+    await mongoose.connect(config.database_url as string);
+    await seedAdmin();
     logger.info(colors.green('🚀 Database connected successfully'));
 
-    const port =
-      typeof config.port === 'number' ? config.port : Number(config.port);
-
-    server = app.listen(port, config.ip_address as string, () => {
-      logger.info(
-        colors.yellow(`♻️  Application listening on port:${config.port}`),
-      );
+    // ✅ Start the HTTP server
+    server = http.createServer(app);
+    const port = Number(config.port) || 3000;
+    server.listen(port, config.ip_address as string, () => {
+      logger.info(colors.yellow(`♻️  Server running on port: ${port}`));
     });
 
-    //socket
-    const io = new Server(server, {
-      pingTimeout: 60000,
-      cors: {
-        origin: '*',
-      },
-    });
-    socketHelper.socket(io);
-    //@ts-ignore
-    global.io = io;
+    // ✅ Initialize WebSocket
+    useSocket(server);
   } catch (error) {
-    errorLogger.error(colors.red('🤢 Failed to connect Database'));
+    errorLogger.error(colors.red('❌ Database connection failed!'), error);
+    process.exit(1);
   }
 
-  //handle unhandleRejection
+  // ✅ Handle unhandled promise rejections
   process.on('unhandledRejection', error => {
-    if (server) {
-      server.close(() => {
-        errorLogger.error('UnhandleRejection Detected', error);
-        process.exit(1);
-      });
-    } else {
-      process.exit(1);
-    }
+    logger.error(colors.red('🚨 Unhandled Rejection:'), error);
+    if (server) server.close(() => process.exit(1));
+    else process.exit(1);
   });
 }
 
-main();
-
-//SIGTERM
+// ✅ Graceful shutdown on SIGTERM
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM IS RECEIVE');
-  if (server) {
-    server.close();
-  }
+  logger.info(colors.magenta('🔴 SIGTERM received, shutting down...'));
+  if (server)
+    server.close(() => logger.info(colors.magenta('✅ Server closed.')));
 });
+
+// Start the server
+startServer();

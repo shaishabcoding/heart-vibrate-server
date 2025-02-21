@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 import { DefaultEventsMap, Server, Socket } from 'socket.io';
 import Chat from './Chat.model';
@@ -155,7 +156,7 @@ const chatSocket = (
       const { _id: userId } = socket.data.user as TUser;
 
       // Check if the user is the sender
-      if (message.sender.toString() !== userId.toString()) {
+      if (message.sender.toString() !== userId!.toString()) {
         console.log(`❌ Unauthorized delete attempt by ${userId}`);
         return;
       }
@@ -178,7 +179,7 @@ const chatSocket = (
       );
 
       console.log(`✅ Message ${messageId} deleted successfully`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`❌ Error deleting message: ${error.message || error}`);
     }
   });

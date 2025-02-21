@@ -4,6 +4,7 @@ import Chat from './Chat.model';
 import { TUser } from '../user/User.interface';
 import Message from '../message/Message.model';
 import saveChunkedFile from '../../../shared/saveChunkedFile';
+import deleteFile from '../../../shared/deleteFile';
 
 const chatSocket = (
   socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
@@ -133,6 +134,54 @@ const chatSocket = (
       }
     },
   );
+
+  socket.on('deleteMessage', async ({ messageId, roomId }) => {
+    if (!messageId || !roomId) {
+      console.log(`❌ Invalid delete request from: ${socket.id}`);
+      return;
+    }
+
+    try {
+      const message = await Message.findById(messageId);
+      const chat = await Chat.findById(roomId)
+        .select('users')
+        .populate('users', 'email');
+
+      if (!message || !chat) {
+        console.log(`❌ Message ${messageId} not found`);
+        return;
+      }
+
+      const { _id: userId } = socket.data.user as TUser;
+
+      // Check if the user is the sender
+      if (message.sender.toString() !== userId.toString()) {
+        console.log(`❌ Unauthorized delete attempt by ${userId}`);
+        return;
+      }
+
+      // If the message contains a file, delete it from storage
+      if (message.type !== 'text' && message.content) {
+        deleteFile(message.content);
+      }
+
+      // Delete the message from the database
+      await Message.findByIdAndDelete(messageId);
+
+      // Notify all users in the room
+      io.to(roomId).emit('messageDeleted', { messageId, roomId });
+
+      await Promise.all(
+        (chat.users as unknown as TUser[]).map(({ email }) =>
+          io.to(`inbox_${email}`).emit('inboxUpdated'),
+        ),
+      );
+
+      console.log(`✅ Message ${messageId} deleted successfully`);
+    } catch (error) {
+      console.error(`❌ Error deleting message: ${error.message || error}`);
+    }
+  });
 
   socket.on('markAllMessagesAsRead', async ({ chatId }) => {
     if (!chatId) {

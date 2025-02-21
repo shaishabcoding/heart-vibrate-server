@@ -28,24 +28,13 @@ const chatSocket = (
   // Handle sending a private message
   socket.on(
     'sendMessage',
-    async ({
-      content,
-      type = 'text',
-      roomId,
-      chunkIndex,
-      totalChunks,
-      isLastChunk,
-    }) => {
+    async ({ content, type = 'text', roomId, chunkIndex, totalChunks }) => {
       if (!content || !roomId) {
         console.log(`❌ Invalid message payload from: ${socket.id}`);
         return;
       }
 
       const { email, name, avatar, _id } = socket.data.user as TUser;
-
-      console.log(
-        `✅ Chunk ${chunkIndex + 1}/${totalChunks} received from ${email} to room: ${roomId}`,
-      );
 
       try {
         const chat = await Chat.findById(roomId).populate(
@@ -57,16 +46,59 @@ const chatSocket = (
           return;
         }
 
-        let filePath = content;
+        const filePath = content;
 
         if (type !== 'text') {
-          // 📌 Store video chunks and wait for complete file
+          // Pass a callback to handle file save completion
           const result = saveChunkedFile(
             content,
             roomId,
             type,
             chunkIndex,
             totalChunks,
+            async response => {
+              if (!response.success || !response.filePath) {
+                console.error('❌ Error saving file:', response.error);
+                return;
+              }
+
+              try {
+                // Create message only after successful file save
+                const newMessage = await Message.create({
+                  chat: roomId,
+                  content: response.filePath,
+                  type,
+                  sender: _id,
+                });
+
+                console.log(
+                  `🔥 Message saved successfully: ${response.filePath}`,
+                );
+
+                // Notify inbox users
+                await Promise.all(
+                  (chat.users as unknown as TUser[]).map(({ email }) =>
+                    io.to(`inbox_${email}`).emit('inboxUpdated'),
+                  ),
+                );
+
+                // Broadcast the completed message
+                io.to(roomId).emit('chatMessageReceived', {
+                  sender: { _id, name, avatar, email },
+                  content: response.filePath,
+                  type,
+                  _id: newMessage._id,
+                  date: newMessage.createdAt,
+                  chatId: roomId,
+                });
+
+                console.log(
+                  `🚀 New message sent successfully to room ${roomId}`,
+                );
+              } catch (error) {
+                console.error('❌ Error creating message:', error);
+              }
+            },
           );
 
           if (!result.success) {
@@ -74,24 +106,11 @@ const chatSocket = (
             return;
           }
 
-          if (!isLastChunk) {
-            return; // Wait until the last chunk before creating the message
-          }
-
-          filePath = result.filePath;
-
-          if (!filePath) {
-            console.error(
-              `❌ Error: File path is missing after saving. Message cannot be created.`,
-            );
-            return;
-          }
+          // Return early, message creation will be handled in callback
+          return;
         }
 
-        // 🔥 **Ensure filePath exists before creating the message**
-        console.log(`✅ File path received: ${filePath}`);
-
-        // 📌 Create the message after file is fully received
+        // Handle text messages as before
         const newMessage = await Message.create({
           chat: roomId,
           content: filePath,
@@ -99,16 +118,6 @@ const chatSocket = (
           sender: _id,
         });
 
-        console.log(`🔥 Message saved successfully: ${filePath}`);
-
-        // 📌 Notify inbox users
-        await Promise.all(
-          (chat.users as unknown as TUser[]).map(({ email }) =>
-            io.to(`inbox_${email}`).emit('inboxUpdated'),
-          ),
-        );
-
-        // 📌 Broadcast the completed message
         io.to(roomId).emit('chatMessageReceived', {
           sender: { _id, name, avatar, email },
           content: filePath,
@@ -118,7 +127,7 @@ const chatSocket = (
           chatId: roomId,
         });
 
-        console.log(`🚀 New message sent successfully to room ${roomId}`);
+        console.log(`🚀 New text message sent successfully to room ${roomId}`);
       } catch (error: any) {
         console.error(`❌ Error sending message: ${error.message || error}`);
       }

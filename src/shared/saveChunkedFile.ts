@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import fs from 'fs';
 import path from 'path';
 
@@ -9,7 +10,12 @@ interface UploadResponse {
 
 const fileChunks: Record<
   string,
-  { chunks: Buffer[]; totalChunks: number; receivedChunks: Set<number> }
+  {
+    chunks: Buffer[];
+    totalChunks: number;
+    receivedChunks: Set<number>;
+    onSave?: (response: UploadResponse) => void; // Add callback
+  }
 > = {};
 
 const saveChunkedFile = (
@@ -18,6 +24,7 @@ const saveChunkedFile = (
   type: 'image' | 'video' | 'audio',
   chunkIndex: number,
   totalChunks: number,
+  onSave?: (response: UploadResponse) => void, // Add callback parameter
 ): UploadResponse => {
   try {
     if (!fileChunks[roomId]) {
@@ -25,6 +32,7 @@ const saveChunkedFile = (
         chunks: new Array(totalChunks).fill(null),
         totalChunks,
         receivedChunks: new Set(),
+        onSave, // Store callback
       };
     }
 
@@ -41,18 +49,23 @@ const saveChunkedFile = (
       `✅ Received chunk ${chunkIndex + 1}/${totalChunks} for room ${roomId}`,
     );
 
-    // Ensure all chunks are received
+    // Still waiting for more chunks
     if (fileChunks[roomId].receivedChunks.size < totalChunks) {
-      return { success: true }; // Still waiting for more chunks
+      return { success: true };
     }
 
     // Ensure all chunks are present before saving
     if (fileChunks[roomId].chunks.includes(null)) {
       console.error(`❌ Error: Missing chunks for room ${roomId}`);
-      return { success: false, error: 'Missing chunks, cannot merge file.' };
+      const response = {
+        success: false,
+        error: 'Missing chunks, cannot merge file.',
+      };
+      fileChunks[roomId].onSave?.(response);
+      return response;
     }
 
-    // 📌 Save final file after receiving last chunk
+    // Save final file after receiving last chunk
     const uploadDir = path.join(process.cwd(), 'uploads', type + 's');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -67,12 +80,22 @@ const saveChunkedFile = (
       Buffer.concat(fileChunks[roomId].chunks as Buffer[]),
     );
 
+    const response = {
+      success: true,
+      filePath: `/${type}s/${path.basename(filePath)}`,
+    };
+
+    // Execute callback before cleanup
+    fileChunks[roomId].onSave?.(response);
+
     delete fileChunks[roomId]; // Cleanup stored chunks
 
     console.log(`✅ File saved successfully: ${filePath}`);
-    return { success: true, filePath: `/${type}s/${path.basename(filePath)}` };
+    return response;
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    const response = { success: false, error: (error as Error).message };
+    fileChunks[roomId]?.onSave?.(response);
+    return response;
   }
 };
 

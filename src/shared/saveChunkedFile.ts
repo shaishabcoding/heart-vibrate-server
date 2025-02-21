@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-unused-vars */
 import fs from 'fs';
 import path from 'path';
@@ -55,7 +56,7 @@ const saveChunkedFile = (
     }
 
     // Ensure all chunks are present before saving
-    if (fileChunks[roomId].chunks.includes(null)) {
+    if ((fileChunks[roomId].chunks as any).includes(null)) {
       console.error(`❌ Error: Missing chunks for room ${roomId}`);
       const response = {
         success: false,

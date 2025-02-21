@@ -120,6 +120,12 @@ const chatSocket = (
           sender: _id,
         });
 
+        await Promise.all(
+          (chat.users as unknown as TUser[]).map(({ email }) =>
+            io.to(`inbox_${email}`).emit('inboxUpdated'),
+          ),
+        );
+
         io.to(roomId).emit('chatMessageReceived', {
           sender: { _id, name, avatar, email },
           content: filePath,

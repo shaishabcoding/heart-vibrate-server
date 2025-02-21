@@ -72,7 +72,9 @@ const saveChunkedFile = (
 
     const filePath = path.join(
       uploadDir,
-      `${roomId}-${Date.now()}.${type === 'video' ? 'webm' : 'jpg'}`,
+      `${roomId}-${Date.now()}.${
+        type === 'video' ? 'webm' : type === 'audio' ? 'mp3' : 'jpg'
+      }`,
     );
 
     // Merge sorted chunks

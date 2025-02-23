@@ -4,3 +4,4 @@ node_modules
 /winston
 .vscode
 uploads
+dist

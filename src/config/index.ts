@@ -32,4 +32,5 @@ export default {
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD,
   },
+  reset_pass_ui_link: 'http://localhost:5173',
 };

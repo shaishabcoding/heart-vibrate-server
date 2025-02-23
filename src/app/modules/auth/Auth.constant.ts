@@ -7,8 +7,8 @@ export const adminData: Partial<TUser> = {
     lastName: 'Chandra Shil',
   },
   gender: 'male',
-  email: config.admin_email,
-  password: config.admin_pass,
+  email: config.admin.email,
+  password: config.admin.password,
   role: 'ADMIN',
   avatar: 'https://avatars.githubusercontent.com/u/109936547?v=4',
 };

@@ -1,24 +1,27 @@
 import { z } from 'zod';
 
-export const AuthValidation = {
-  passwordChangeValidationSchema: z.object({
+export const AuthValidations = {
+  login: z.object({
     body: z.object({
-      oldPassword: z
-        .string()
-        .min(1, 'Old Password is required')
-        .min(6, 'Old Password must be at least 6 characters long'),
-      newPassword: z
-        .string()
-        .min(1, 'New Password is required')
-        .min(6, 'New Password must be at least 6 characters long'),
+      email: z
+        .string({
+          required_error: 'Email is missing',
+        })
+        .toLowerCase()
+        .email('Give a valid email'),
+      password: z
+        .string({
+          required_error: 'Password is missing',
+        })
+        .min(6, 'Password must be at least 6 characters long'),
     }),
   }),
 
-  refreshTokenValidationSchema: z.object({
-    cookies: z.object({
-      refreshToken: z.string({
-        required_error: 'refreshToken is missing',
-      }),
+  resetPassword: z.object({
+    body: z.object({
+      password: z
+        .string({ required_error: 'Password is missing' })
+        .min(6, 'Password must be 6 characters long'),
     }),
   }),
 };

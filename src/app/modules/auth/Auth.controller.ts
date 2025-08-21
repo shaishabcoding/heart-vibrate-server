@@ -1,83 +1,95 @@
 import { AuthServices } from './Auth.service';
-import { StatusCodes } from 'http-status-codes';
-import catchAsync from '../../../shared/catchAsync';
-import config from '../../../config';
-import sendResponse from '../../../shared/sendResponse';
+import catchAsync from '../../middlewares/catchAsync';
+import serveResponse from '../../../util/server/serveResponse';
+import { OtpServices } from '../otp/Otp.service';
+import prisma from '../../../util/prisma';
+import { EUserRole } from '../../../../prisma';
+import { TToken } from './Auth.utils';
 
-export const AuthController = {
-  login: catchAsync(async (req, res) => {
-    const { body } = req;
-    const { accessToken, refreshToken, user } =
-      await AuthServices.loginUser(body);
+export const AuthControllers = {
+  login: catchAsync(async ({ user, body }, res) => {
+    await AuthServices.getAuth(user.id, body.password);
 
-    res.cookie('refreshToken', refreshToken, {
-      secure: config.node_env !== 'development',
-      httpOnly: true,
+    const { access_token, refresh_token } = AuthServices.retrieveToken(
+      user.id,
+      'access_token',
+      'refresh_token',
+    );
+
+    AuthServices.setTokens(res, {
+      access_token,
+      refresh_token,
     });
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
+    serveResponse(res, {
       message: 'Login successfully!',
-      data: { token: accessToken, user },
+      data: { access_token, user },
     });
   }),
 
-  logout: catchAsync(async (_req, res) => {
-    res.cookie('refreshToken', '', {
-      secure: process.env.NODE_ENV !== 'development',
-      httpOnly: true,
-      expires: new Date(0), // remove refreshToken
-    });
+  logout: catchAsync(async ({ cookies }, res) => {
+    AuthServices.destroyTokens(res, ...(Object.keys(cookies) as TToken[]));
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: 'Logged out successfully',
+    serveResponse(res, {
+      message: 'Logged out successfully!',
     });
   }),
 
-  changePassword: catchAsync(async (req, res) => {
-    await AuthServices.changePassword(req.user, req.body);
+  resetPassword: catchAsync(async ({ body, user }, res) => {
+    await AuthServices.modifyPassword({ userId: user.id }, body.password);
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: 'Password has changed successfully!',
-      data: null,
+    const { access_token, refresh_token } = AuthServices.retrieveToken(
+      user.id,
+      'access_token',
+      'refresh_token',
+    );
+
+    AuthServices.destroyTokens(res, 'reset_token');
+    AuthServices.setTokens(res, { access_token, refresh_token });
+
+    serveResponse(res, {
+      message: 'Password reset successfully!',
+      data: { access_token, user },
     });
   }),
 
-  forgetPassword: catchAsync(async (req, res) => {
-    await AuthServices.forgetPassword(req.user);
+  refreshToken: catchAsync(async ({ user }, res) => {
+    const { access_token } = AuthServices.retrieveToken(
+      user.id,
+      'access_token',
+    );
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: 'Password reset link sent successfully!',
-      data: null,
+    AuthServices.setTokens(res, { access_token });
+
+    serveResponse(res, {
+      message: 'AccessToken refreshed successfully!',
+      data: { access_token },
     });
   }),
 
-  resetPassword: catchAsync(async (req, res) => {
-    await AuthServices.forgetPassword(req.user);
+  changePassword: catchAsync(async ({ user, body }, res) => {
+    const { id } = await AuthServices.getAuth(user.id, body.oldPassword);
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: 'Password reset link sent successfully!',
-      data: null,
+    await AuthServices.modifyPassword({ id }, body.newPassword);
+
+    serveResponse(res, {
+      message: 'Password changed successfully!',
     });
   }),
 
-  refreshToken: catchAsync(async (req, res) => {
-    const result = await AuthServices.refreshToken(req.cookies.refreshToken);
+  verifyAccount: catchAsync(async ({ user, body }, res) => {
+    await OtpServices.verify(user.id, body.otp);
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: 'New Access create successfully!',
-      data: result,
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        role: EUserRole.USER,
+      },
+    });
+
+    serveResponse(res, {
+      message: 'Account verified successfully!',
+      data: { user },
     });
   }),
 };

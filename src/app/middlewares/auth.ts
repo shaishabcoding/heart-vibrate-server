@@ -1,51 +1,64 @@
-import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { Secret } from 'jsonwebtoken';
-import config from '../../config';
-import ApiError from '../../errors/ApiError';
-import { jwtHelper } from '../../helpers/jwtHelper';
-import User from '../modules/user/User.model';
 import ServerError from '../../errors/ServerError';
+import { decodeToken, superRoles, TToken } from '../modules/auth/Auth.utils';
+import catchAsync from './catchAsync';
+import { EUserRole } from '../../../prisma';
+import prisma from '../../util/prisma';
+import { enum_decode } from '../../util/transform/enum';
 
-const auth =
-  (...roles: ('USER' | 'ADMIN')[]) =>
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const tokenWithBearer = req.headers.authorization;
-      if (!tokenWithBearer) {
-        throw new ApiError(StatusCodes.UNAUTHORIZED, 'You are not authorized');
-      }
+/**
+ * Middleware to authenticate and authorize requests based on user roles
+ *
+ * @param roles - The roles that are allowed to access the resource
+ */
+const auth = (roles: EUserRole[] = [], token_type: TToken = 'access_token') =>
+  catchAsync(async (req, _, next) => {
+    const token =
+      req.cookies[token_type] ||
+      req.headers.authorization ||
+      req.query[token_type];
 
-      if (tokenWithBearer && tokenWithBearer.startsWith('Bearer')) {
-        const token = tokenWithBearer.split(' ')[1];
+    const id = decodeToken(token, token_type)?.uid;
 
-        //verify token
-        const { email } = jwtHelper.verifyToken(
-          token,
-          config.jwt.jwt_secret as Secret,
-        );
+    if (!id)
+      throw new ServerError(
+        StatusCodes.UNAUTHORIZED,
+        'Your session has expired. Login again.',
+      );
 
-        const user = await User.findOne({ email });
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
 
-        if (!user)
-          throw new ServerError(StatusCodes.UNAUTHORIZED, 'Invalid user');
+    if (!user)
+      throw new ServerError(
+        StatusCodes.UNAUTHORIZED,
+        'Maybe your account has been deleted. Register again.',
+      );
 
-        //set user to header
-        req.user = user;
+    const requiredRoles = Array.from(new Set([...superRoles, ...roles]));
 
-        //guard user
-        if (roles.length && !roles.includes(user.role)) {
-          throw new ApiError(
-            StatusCodes.FORBIDDEN,
-            "You don't have permission to access this api",
-          );
-        }
+    if (roles.length && !requiredRoles.includes(user.role))
+      throw new ServerError(
+        StatusCodes.FORBIDDEN,
+        user.role === EUserRole.GUEST
+          ? `Oh ${user.name}, you were not verified yet! Please verify your email.`
+          : `Oh ${user.name}, poor ${enum_decode(user?.role)}! Only the ${requiredRoles.map(enum_decode).join(' or ')} can access ${req.path} route!`,
+      );
 
-        next();
-      }
-    } catch (error) {
-      next(error);
-    }
-  };
+    req.user = user;
+
+    next();
+  });
+
+auth.admin = () => auth([EUserRole.ADMIN]);
+auth.subAdmin = () => auth([EUserRole.SUB_ADMIN]);
+auth.influencer = () => auth([EUserRole.INFLUENCER]);
+auth.user = () => auth([EUserRole.USER]);
+auth.notGuest = () => auth(Object.values(EUserRole).excludes(EUserRole.GUEST));
+auth.guest = () => auth([EUserRole.GUEST]);
+
+auth.reset = () => auth([], 'reset_token');
+auth.refresh = () => auth([], 'refresh_token');
 
 export default auth;

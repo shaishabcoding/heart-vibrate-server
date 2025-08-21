@@ -1,26 +1,48 @@
+/* eslint-disable no-unused-vars */
+import type { Request } from 'express';
 import { AnyZodObject } from 'zod';
-import catchAsync from '../../shared/catchAsync';
+import catchAsync from './catchAsync';
+import config from '../../config';
+
+const keys = ['body', 'query', 'params', 'cookies'] as const;
+
+type SchemaOrFn =
+  | AnyZodObject
+  | ((req: Request) => AnyZodObject | Promise<AnyZodObject>);
 
 /**
- * Middleware to purify and validate the request {body, cookies} using a Zod schema.
+ * Middleware to validate and sanitize incoming Express requests using Zod schemas.
  *
- * This middleware uses the provided Zod schema to parse and validate the request body.
- * If the validation is successful, the purified data is assigned back to `req.body`.
- * If the validation fails, an error is thrown and handled by the `catchAsync` function.
- *
- * @param {AnyZodObject} schema - The Zod schema to validate the request body against.
- * @return Middleware function to purify the request body.
+ * Supports static and dynamic schemas (functions returning schemas).
+ * Validates body, query, params, and cookies, then merges results into `req`.
  */
-const purifyRequest = (schema: AnyZodObject) =>
-  catchAsync(async (req, _, next) => {
-    const parseData = await schema.parseAsync({
-      body: req.body,
-      cookies: req.cookies,
-    });
+const purifyRequest = (...schemas: SchemaOrFn[]) =>
+  catchAsync(
+    async (req, _, next) => {
+      const results = await Promise.all(
+        schemas.map(async schema => {
+          const zodSchema =
+            typeof schema === 'function' ? await schema(req) : schema;
+          return zodSchema.parseAsync(req);
+        }),
+      );
 
-    req.body = parseData.body;
+      keys.forEach(key => {
+        req[key] = Object.assign(
+          {},
+          key === 'params' && req.params,
+          ...results.map(result => result?.[key] ?? {}),
+        );
+      });
 
-    next();
-  });
+      next();
+    },
+    (error, req, _, next) => {
+      if (config.server.isDevelopment)
+        keys.forEach(key => console.log(`${key} :`, req[key]));
+
+      next(error);
+    },
+  );
 
 export default purifyRequest;

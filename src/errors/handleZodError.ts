@@ -1,18 +1,16 @@
 import { ZodError } from 'zod';
-import { IErrorMessage } from '../types/errors.types';
+import { TErrorMessage } from '../types/errors.types';
+import { StatusCodes } from 'http-status-codes';
 
-const handleZodError = (error: ZodError) => {
-  const errorMessages: IErrorMessage[] = error.errors.map(el => {
-    return {
-      path: el.path[el.path.length - 1],
-      message: el.message,
-    };
-  });
+const handleZodError = ({ errors }: ZodError) => {
+  const errorMessages: TErrorMessage[] = errors.map(({ path, message }) => ({
+    path: path[path.length - 1],
+    message,
+  }));
 
-  const statusCode = 400;
   return {
-    statusCode,
-    message: 'Validation Error',
+    statusCode: StatusCodes.BAD_REQUEST,
+    message: 'Request validation error',
     errorMessages,
   };
 };

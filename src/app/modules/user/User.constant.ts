@@ -1,5 +1,3 @@
-export const userSearchableFields = [
-  "email",
-  "name.firstName",
-  "name.lastName",
-];
+import { User as TUser } from '../../../../prisma';
+
+export const userSearchableFields: (keyof TUser)[] = ['name', 'email', 'phone'];

@@ -1,87 +1,71 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-unused-expressions */
+/* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars, no-console */
 import { ErrorRequestHandler } from 'express';
-import config from '../../config';
-import ApiError from '../../errors/ApiError';
-import handleValidationError from '../../errors/handleValidationError';
-import handleZodError from '../../errors/handleZodError';
-import { errorLogger } from '../../shared/logger';
-import { IErrorMessage } from '../../types/errors.types';
 import { StatusCodes } from 'http-status-codes';
+import colors from 'colors';
+import { ZodError } from 'zod';
+import config from '../../config';
 import ServerError from '../../errors/ServerError';
+import handleZodError from '../../errors/handleZodError';
+import { errorLogger } from '../../util/logger/logger';
+import { TErrorHandler, TErrorMessage } from '../../types/errors.types';
+import multer from 'multer';
+import handleMulterError from '../../errors/handleMulterError';
+import { deleteImage } from './capture';
+import { Prisma } from '../../../prisma';
+import {
+  handlePrismaRequestError,
+  handlePrismaValidationError,
+} from '../../errors/handlePrismaErrors';
 
-const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
-  config.node_env === 'development'
-    ? console.log('🚨 globalErrorHandler ~~ ', error)
-    : errorLogger.error('🚨 globalErrorHandler ~~ ', error);
+export const defaultError: TErrorHandler = {
+  statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+  message: 'Something went wrong',
+  errorMessages: [],
+};
 
-  let statusCode = 500;
-  let message = 'Something went wrong';
-  let errorMessages: IErrorMessage[] = [];
+const globalErrorHandler: ErrorRequestHandler = (error, req, res, _) => {
+  /** delete uploaded files */
+  req.tempFiles?.forEach(deleteImage);
 
-  if (error.name === 'ZodError') {
-    const simplifiedError = handleZodError(error);
-    statusCode = simplifiedError.statusCode;
-    message = simplifiedError.message;
-    errorMessages = simplifiedError.errorMessages;
-  } else if (error.name === 'ValidationError') {
-    const simplifiedError = handleValidationError(error);
-    statusCode = simplifiedError.statusCode;
-    message = simplifiedError.message;
-    errorMessages = simplifiedError.errorMessages;
-  } else if (error.name === 'TokenExpiredError') {
-    statusCode = StatusCodes.UNAUTHORIZED;
-    message = 'Session Expired';
-    errorMessages = error?.message
-      ? [
-          {
-            path: '',
-            message:
-              'Your session has expired. Please log in again to continue.',
-          },
-        ]
-      : [];
-  } else if (error.name === 'JsonWebTokenError') {
-    statusCode = StatusCodes.UNAUTHORIZED;
-    message = 'Invalid Token';
-    errorMessages = error?.message
-      ? [
-          {
-            path: '',
-            message: 'Your token is invalid. Please log in again to continue.',
-          },
-        ]
-      : [];
-  } else if (error instanceof ApiError || error instanceof ServerError) {
-    statusCode = error.statusCode;
-    message = error.message;
-    errorMessages = error.message
-      ? [
-          {
-            path: '',
-            message: error.message,
-          },
-        ]
-      : [];
-  } else if (error instanceof Error) {
-    message = error.message;
-    errorMessages = error.message
-      ? [
-          {
-            path: '',
-            message: error?.message,
-          },
-        ]
-      : [];
-  }
+  if (config.server.isDevelopment)
+    console.log(colors.red('🚨 globalErrorHandler ~~ '), error);
+  else errorLogger.error(colors.red('🚨 globalErrorHandler ~~ '), error);
+
+  const { statusCode, message, errorMessages } = formatError(error);
 
   res.status(statusCode).json({
     success: false,
     message,
     errorMessages,
-    stack: config.node_env !== 'production' ? error?.stack : undefined,
+    stack: config.server.isDevelopment && error.stack,
   });
 };
 
 export default globalErrorHandler;
+
+const formatError = (error: any): TErrorHandler => {
+  if (error instanceof multer.MulterError) return handleMulterError(error);
+  if (error instanceof ZodError) return handleZodError(error);
+  if (error instanceof Prisma.PrismaClientKnownRequestError)
+    return handlePrismaRequestError(error);
+  if (error instanceof Prisma.PrismaClientValidationError)
+    return handlePrismaValidationError(error);
+  if (error instanceof ServerError)
+    return {
+      statusCode: error.statusCode,
+      message: error.message,
+      errorMessages: createErrorMessage(error.message),
+    };
+  if (error instanceof Error)
+    return {
+      ...defaultError,
+      message: error.message,
+      errorMessages: createErrorMessage(error.message),
+    };
+
+  return defaultError;
+};
+
+export const createErrorMessage = (message: string): TErrorMessage[] => [
+  { path: '', message },
+];

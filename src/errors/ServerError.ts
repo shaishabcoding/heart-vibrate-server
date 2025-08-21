@@ -1,6 +1,13 @@
+/* eslint-disable no-unused-vars */
+
+/**
+ * Custom error class for server-side errors
+ *
+ * This class extends the built-in Error class and provides a custom error message
+ * and stack trace for server-side errors.
+ */
 class ServerError extends Error {
   constructor(
-    // eslint-disable-next-line no-unused-vars
     public readonly statusCode: number,
     message = 'An error occurred',
     stack?: string,

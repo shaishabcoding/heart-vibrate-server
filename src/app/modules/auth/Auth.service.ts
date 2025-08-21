@@ -1,141 +1,64 @@
-import User from '../user/User.model';
-import bcrypt from 'bcrypt';
-import { createToken, verifyToken } from './Auth.utils';
-import { TUser } from '../user/User.interface';
-import { makeResetBody } from './Auth.constant';
+/* eslint-disable no-unused-vars */
+import { encodeToken, TToken, verifyPassword } from './Auth.utils';
 import { StatusCodes } from 'http-status-codes';
-import ApiError from '../../../errors/ApiError';
-import { sendEmail } from '../../../helpers/sendMail';
+import ServerError from '../../../errors/ServerError';
 import config from '../../../config';
+import { Response } from 'express';
+import ms from 'ms';
+import prisma from '../../../util/prisma';
+import { Prisma } from '../../../../prisma';
 
 export const AuthServices = {
-  async loginUser({ email, password }: { email: string; password: string }) {
-    const user = await User.findOne({
-      email,
-    }).select('+password');
-
-    if (!user) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'User not found!');
-    }
-
-    if (user.status !== 'ACTIVE') {
-      throw new ApiError(
-        StatusCodes.FORBIDDEN,
-        'Account is not active. Please contact support.',
-      );
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Incorrect password!');
-    }
-
-    const {
-      _id,
-      gender,
-      name: { firstName, lastName },
-      role,
-      avatar,
-    } = user.toJSON();
-
-    const partialUser: Partial<TUser> = {
-      _id,
-      email,
-      gender,
-      name: { firstName, lastName },
-      role,
-      avatar,
-    };
-
-    const jwtPayload = {
-      email,
-    };
-
-    const accessToken = createToken(jwtPayload, 'access');
-
-    const refreshToken = createToken(jwtPayload, 'refresh');
-
-    return { accessToken, user: partialUser, refreshToken };
-  },
-
-  async changePassword(
-    user: TUser,
-    {
-      newPassword,
-      oldPassword,
-    }: {
-      newPassword: string;
-      oldPassword: string;
-    },
-  ) {
-    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-    if (!isPasswordValid) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Incorrect password!');
-    }
-
-    newPassword = await bcrypt.hash(
-      newPassword,
-      +(config.bcrypt_salt_rounds as string),
-    );
-
-    await User.updateOne(
-      {
-        email: user.email,
-      },
-      {
-        password: newPassword,
-      },
-    );
-  },
-
-  async forgetPassword({ email }: TUser) {
-    const jwtPayload = {
-      email,
-    };
-
-    const resetToken = createToken(jwtPayload, 'reset');
-
-    await sendEmail(email, 'Password Reset Request', makeResetBody(resetToken));
-  },
-
-  async resetPassword({ email }: TUser) {
-    const jwtPayload = {
-      email,
-    };
-
-    const resetToken = createToken(jwtPayload, 'reset');
-
-    await sendEmail(email, 'Password Reset Request', makeResetBody(resetToken));
-  },
-
-  async refreshToken(token: string) {
-    if (!token) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Access Denied!');
-    }
-
-    const { email } = verifyToken(token.split(' ')[0], 'refresh');
-
-    const user = await User.findOne({
-      email,
+  async getAuth(userId: string, password: string) {
+    const auth = await prisma.auth.findFirst({
+      where: { user: { id: userId } },
     });
 
-    if (!user) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'User not found!');
-    }
-
-    if (user.status !== 'ACTIVE') {
-      throw new ApiError(
-        StatusCodes.FORBIDDEN,
-        'Account is not active. Please contact support.',
+    if (!auth || !(await verifyPassword(password, auth.password)))
+      throw new ServerError(
+        StatusCodes.UNAUTHORIZED,
+        'Your credentials are incorrect.',
       );
-    }
 
-    const jwtPayload = {
-      email,
-    };
+    return auth;
+  },
 
-    const accessToken = createToken(jwtPayload, 'access');
+  setTokens(res: Response, tokens: { [key in TToken]?: string }) {
+    Object.entries(tokens).forEach(([key, value]) =>
+      res.cookie(key, value, {
+        httpOnly: true,
+        secure: !config.server.isDevelopment,
+        maxAge: ms(config.jwt[key as TToken].expire_in),
+      }),
+    );
+  },
 
-    return { accessToken };
+  destroyTokens<T extends readonly TToken[]>(res: Response, ...cookies: T) {
+    for (const cookie of cookies)
+      res.clearCookie(cookie, {
+        httpOnly: true,
+        secure: !config.server.isDevelopment,
+        maxAge: 0, // expire immediately
+      });
+  },
+
+  /** this function returns an object of tokens
+   * e.g. retrieveToken(userId, 'access_token', 'refresh_token');
+   * returns { access_token, refresh_token }
+   */
+  retrieveToken<T extends readonly TToken[]>(uid: string, ...token_types: T) {
+    return Object.fromEntries(
+      token_types.map(token_type => [
+        token_type,
+        encodeToken({ uid }, token_type),
+      ]),
+    ) as Record<T[number], string>;
+  },
+
+  async modifyPassword(where: Prisma.AuthWhereUniqueInput, password: string) {
+    return prisma.auth.update({
+      where,
+      data: { password: await password?.hash() },
+    });
   },
 };

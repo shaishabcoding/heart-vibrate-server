@@ -1,53 +1,80 @@
-import express from 'express';
-import { AuthController } from './Auth.controller';
-import { AuthValidation } from './Auth.validation';
+import { Router } from 'express';
+import { AuthControllers } from './Auth.controller';
+import { AuthValidations } from './Auth.validation';
 import auth from '../../middlewares/auth';
 import { UserControllers } from '../user/User.controller';
-import { UserValidation } from '../user/User.validation';
-import imageUploader from '../../middlewares/imageUploader';
+import { UserValidations } from '../user/User.validation';
 import purifyRequest from '../../middlewares/purifyRequest';
+import capture from '../../middlewares/capture';
+import { UserMiddlewares } from '../user/User.middleware';
+import { OtpValidations } from '../otp/Otp.validation';
+import { OtpControllers } from '../otp/Otp.controller';
+import { otpLimiter } from '../otp/Otp.utils';
 
-const router = express.Router();
+const router = Router();
 
 router.post(
   '/register',
-  imageUploader((req, images) => {
-    req.body.avatar = images[0];
-  }),
-  purifyRequest(UserValidation.userValidationSchema),
+  capture({ avatar: { maxCount: 1, size: 5 * 1024 * 1024 } }),
+  purifyRequest(UserValidations.create, UserValidations.edit),
   UserControllers.createUser,
 );
 
-router.post('/login', AuthController.login);
-
-router.post('/logout', AuthController.logout);
-
-router.patch(
-  '/change-password',
-  auth('USER', 'ADMIN'),
-  purifyRequest(AuthValidation.passwordChangeValidationSchema),
-  AuthController.changePassword,
-);
-
 router.post(
-  '/forget-password',
-  auth('USER', 'ADMIN'),
-  AuthController.forgetPassword,
+  '/login',
+  purifyRequest(AuthValidations.login),
+  UserMiddlewares.useUser(),
+  AuthControllers.login,
 );
 
-router.post(
-  '/reset-password',
-  auth('USER', 'ADMIN'),
-  AuthController.resetPassword,
-);
+router.post('/logout', AuthControllers.logout);
 
 /**
  * generate new access token
  */
+router.get('/refresh-token', auth.refresh(), AuthControllers.refreshToken);
+
+/* Otps */
+
+/**
+ * Forget password
+ */
+{
+  router.post(
+    '/reset-password-otp-send',
+    otpLimiter,
+    purifyRequest(OtpValidations.email),
+    UserMiddlewares.useUser(),
+    OtpControllers.resetPasswordOtpSend,
+  );
+  router.post(
+    '/reset-password-otp-verify',
+    otpLimiter,
+    purifyRequest(OtpValidations.email, OtpValidations.otp),
+    UserMiddlewares.useUser(),
+    OtpControllers.resetPasswordOtpVerify,
+  );
+  router.post(
+    '/reset-password',
+    auth.reset(),
+    purifyRequest(AuthValidations.resetPassword),
+    AuthControllers.resetPassword,
+  );
+}
+
 router.get(
-  '/refresh-token',
-  purifyRequest(AuthValidation.refreshTokenValidationSchema),
-  AuthController.refreshToken,
+  '/account-verify-otp-send',
+  otpLimiter,
+  auth.guest(),
+  OtpControllers.accountVerifyOtpSend,
+);
+
+router.post(
+  '/account-verify',
+  otpLimiter,
+  auth.guest(),
+  purifyRequest(OtpValidations.otp),
+  AuthControllers.verifyAccount,
 );
 
 export const AuthRoutes = router;

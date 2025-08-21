@@ -1,63 +1,92 @@
-# Heart Vibrate - Backend Server  
+# 💓 Heart Vibrate Server
 
-A robust **Node.js + Express** backend for the **Heart Vibrate** chat application, featuring authentication, real-time messaging, file uploads, and payment integration.  
+[![License](https://img.shields.io/github/license/shaishab316/heart-vibrate-server?color=blue)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/shaishab316/heart-vibrate-server)](https://github.com/shaishab316/heart-vibrate-server/releases)
+[![Stars](https://img.shields.io/github/stars/shaishab316/heart-vibrate-server?style=social)](https://github.com/shaishab316/heart-vibrate-server/stargazers)
 
-## 🚀 Features  
 
-### 🔒 Authentication & Security  
-- **JWT-based authentication** (`jsonwebtoken`)  
-- **Password hashing** (`bcrypt`)  
-- **CORS & cookie management** (`cors`, `cookie-parser`)  
-
-### 💬 Real-Time Chat  
-- **Socket.IO** for instant messaging  
-- **MongoDB** (via `mongoose`) for message history  
-
-### 📝 Logging & Monitoring  
-- **Winston** for structured logging  
-- **Daily log rotation**  
+A **realtime chat server** built with [Node.js](https://nodejs.org), [Express](https://expressjs.com), [Socket.IO](https://socket.io), [Prisma](https://www.prisma.io), and [MongoDB](https://www.mongodb.com).
 
 ---
 
-## 🛠️ Tech Stack  
-
-| Category       | Packages Used                          |  
-|---------------|----------------------------------------|  
-| **Runtime**   | Node.js (TypeScript)                   |  
-| **Framework** | Express                                |  
-| **Database**  | MongoDB (Mongoose)                     |  
-| **Auth**      | JWT, Bcrypt                           |  
-| **Realtime**  | Socket.IO                              |  
-| **Logging**   | Winston + Daily Rotate File            |  
-| **Linting**   | ESLint + Prettier                      |  
+## 📌 Features
+- Realtime messaging with **Socket.IO**
+- User authentication (JWT)
+- Persistent chat history with **MongoDB + Prisma**
+- REST API for auth & chat endpoints
+- Production-ready backend for chat apps
 
 ---
 
-## ⚙️ Installation  
+## ⚡ Tech Stack
 
-1. **Clone the repo**  
-   ```sh 
-   git clone https://github.com/shaishabcoding/heart-vibrate-server.git
-   cd heart-vibrate-server
-   ```
+[![Node.js](https://img.shields.io/badge/Node.js-22.x-green?logo=node.js&logoColor=white)](https://nodejs.org)
+[![Express](https://img.shields.io/badge/Express.js-black?logo=express&logoColor=white)](https://expressjs.com)
+[![Socket.io](https://img.shields.io/badge/Socket.io-realtime-blue?logo=socket.io&logoColor=white)](https://socket.io)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.x-green?logo=mongodb&logoColor=white)](https://www.mongodb.com)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-blue?logo=prisma&logoColor=white)](https://www.prisma.io)
 
-2. **Install dependencies**  
-   ```sh
-   npm install
-   ```
+---
 
-3. **Set up environment variables**  
-   Create a `.env` file:  
-   ```env
-   PORT=5000
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
-   STRIPE_KEY=your_stripe_api_key
-   SMTP_USER=your_email@service.com
-   SMTP_PASS=your_email_password
-   ```
+## 🚀 Getting Started
 
-4. **Run the server**  
-   ```sh
-   npm run dev  # Development (ts-node-dev)
-   ```
+### 1. Clone & Install
+```bash
+git clone https://github.com/shaishab316/heart-vibrate-server.git
+cd heart-vibrate-server
+npm install
+````
+
+### 2. Run
+
+```bash
+npm run dev   # start in development
+npm run build && npm start # start in production
+# .env auto generate
+```
+
+---
+
+## 🗂 Project Structure
+
+```bash
+heart-vibrate-server/
+├── .github/workflows/ # CI/CD pipelines
+├── public/ # Static assets (favicon, images, logos)
+├── src/
+│ ├── app/ # Middlewares & feature modules
+│ ├── config/ # App & environment configuration
+│ ├── errors/ # Error classes & handlers
+│ ├── routes/ # API route definitions
+│ ├── types/ # TypeScript types
+│ ├── util/ # Utilities (db, logger, crypto, mail, etc.)
+│ ├── app.ts # Express app setup
+│ └── server.ts # Server entry point
+├── prisma.config.ts # Prisma configuration
+├── tsconfig.json # TypeScript configuration
+├── package.json
+└── README.md
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repo
+2. Create a branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m "Add feature"`)
+4. Push and open a PR
+
+---
+
+## 📜 License
+
+Released under the [MIT License](LICENSE).
+
+---
+
+## ⭐ Support
+
+If you find this project useful, please consider leaving a **star** ⭐ on GitHub.

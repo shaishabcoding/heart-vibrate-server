@@ -41,7 +41,7 @@ router.get('/refresh-token', auth.refresh(), AuthControllers.refreshToken);
  */
 {
   router.post(
-    '/reset-password-otp-send',
+    '/forgot-password',
     otpLimiter,
     purifyRequest(OtpValidations.email),
     UserMiddlewares.useUser(),
@@ -62,7 +62,7 @@ router.get('/refresh-token', auth.refresh(), AuthControllers.refreshToken);
   );
 }
 
-router.get(
+router.post(
   '/account-verify-otp-send',
   otpLimiter,
   auth.guest(),

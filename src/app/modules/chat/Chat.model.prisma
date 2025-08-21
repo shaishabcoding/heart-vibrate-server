@@ -1,0 +1,12 @@
+model Chat {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String?
+  banner    String?
+  userIds   String[] @db.ObjectId
+  isGroup   Boolean  @default(false)
+  adminIds  String[] @db.ObjectId
+
+  @@map("chats")
+}

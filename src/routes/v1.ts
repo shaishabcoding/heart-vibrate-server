@@ -4,6 +4,7 @@ import AdminRoutes from '../app/modules/admin/Admin.route';
 import { AuthRoutes } from '../app/modules/auth/Auth.route';
 import { UserRoutes } from '../app/modules/user/User.route';
 import { StatusCodes } from 'http-status-codes';
+import { ChatRoutes } from '../app/modules/chat/Chat.route';
 
 const appRouter = Router();
 
@@ -20,5 +21,6 @@ const appRouter = Router();
 export default appRouter.inject([
   { path: '/auth', route: AuthRoutes },
   { path: '/profile', route: UserRoutes.user },
+  { path: '/chats', middlewares: [auth.user()], route: ChatRoutes.user },
   { path: '/admin', middlewares: [auth.admin()], route: AdminRoutes },
 ]);

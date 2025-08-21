@@ -26,9 +26,7 @@ const auth = (roles: EUserRole[] = [], token_type: TToken = 'access_token') =>
         'Your session has expired. Login again.',
       );
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
+    const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user)
       throw new ServerError(
@@ -52,8 +50,6 @@ const auth = (roles: EUserRole[] = [], token_type: TToken = 'access_token') =>
   });
 
 auth.admin = () => auth([EUserRole.ADMIN]);
-auth.subAdmin = () => auth([EUserRole.SUB_ADMIN]);
-auth.influencer = () => auth([EUserRole.INFLUENCER]);
 auth.user = () => auth([EUserRole.USER]);
 auth.notGuest = () => auth(Object.values(EUserRole).excludes(EUserRole.GUEST));
 auth.guest = () => auth([EUserRole.GUEST]);

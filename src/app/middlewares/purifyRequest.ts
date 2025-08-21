@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+/* eslint-disable no-console,no-unused-vars */
 import type { Request } from 'express';
 import { AnyZodObject } from 'zod';
 import catchAsync from './catchAsync';

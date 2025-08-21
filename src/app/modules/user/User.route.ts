@@ -5,15 +5,10 @@ import { QueryValidations } from '../query/Query.validation';
 import { UserValidations } from './User.validation';
 import capture from '../../middlewares/capture';
 import { AuthControllers } from '../auth/Auth.controller';
-import { ReviewValidations } from '../review/Review.validation';
-import { ReviewControllers } from '../review/Review.controller';
 import auth from '../../middlewares/auth';
 
 const avatarCapture = capture({
-  avatar: {
-    size: 5 * 1024 * 1024,
-    maxCount: 1,
-  },
+  avatar: { size: 5 * 1024 * 1024, maxCount: 1 },
 });
 
 const admin = Router();
@@ -98,19 +93,6 @@ const subAdmin = Router();
     purifyRequest(QueryValidations.exists('influencerId', 'user')),
     UserControllers.declineInfluencer,
   );
-
-  subAdmin.post(
-    '/:influencerId/review',
-    purifyRequest(
-      QueryValidations.exists('influencerId', 'user'),
-      ReviewValidations.giveReview,
-    ),
-    ReviewControllers.giveReview,
-  );
 }
 
-export const UserRoutes = {
-  admin,
-  user,
-  subAdmin,
-};
+export const UserRoutes = { admin, user, subAdmin };

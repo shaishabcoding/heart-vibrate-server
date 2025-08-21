@@ -1,15 +1,15 @@
 # 💓 Heart Vibrate Server
 
-[![License](https://img.shields.io/github/license/shaishab316/heart-vibrate-server?color=blue)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/shaishab316/heart-vibrate-server)](https://github.com/shaishab316/heart-vibrate-server/releases)
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/shaishab316/heart-vibrate-server?style=social)](https://github.com/shaishab316/heart-vibrate-server/stargazers)
 
-
-A **realtime chat server** built with [Node.js](https://nodejs.org), [Express](https://expressjs.com), [Socket.IO](https://socket.io), [Prisma](https://www.prisma.io), and [MongoDB](https://www.mongodb.com).
+Heart Vibrate Server is a production-ready Node.js server for chat applications built with Express.js, Socket.IO, MongoDB, and Prisma. It provides a scalable and efficient way to handle real-time communication and user authentication. With a simple and intuitive API, developers can easily integrate the server into their applications and start building their own chat features.
 
 ---
 
 ## 📌 Features
+
 - Realtime messaging with **Socket.IO**
 - User authentication (JWT)
 - Persistent chat history with **MongoDB + Prisma**
@@ -31,11 +31,12 @@ A **realtime chat server** built with [Node.js](https://nodejs.org), [Express](h
 ## 🚀 Getting Started
 
 ### 1. Clone & Install
+
 ```bash
 git clone https://github.com/shaishab316/heart-vibrate-server.git
 cd heart-vibrate-server
 npm install
-````
+```
 
 ### 2. Run
 

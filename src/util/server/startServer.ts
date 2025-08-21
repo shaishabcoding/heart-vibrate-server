@@ -9,11 +9,7 @@ import connectDB from './connectDB';
 import { AdminServices } from '../../app/modules/admin/Admin.service';
 import killPort from 'kill-port';
 import { verifyEmailTransporter } from '../sendMail';
-import firebase from 'firebase-admin';
 
-firebase.initializeApp({
-  credential: firebase.credential.cert(config.firebase as any),
-});
 
 const {
   server: { port, ip_address, name },

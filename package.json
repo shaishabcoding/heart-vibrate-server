@@ -1,37 +1,37 @@
 {
-  "template": {
-    "name": "express-it",
-    "repository": "https://github.com/shaishab316/express-it.git"
-  },
-  "name": "business-management",
-  "version": "1.0.0",
-  "description": "Business Management System",
+  "name": "heart-vibrate-server",
+  "version": "1.0.1",
+  "description": "A realtime chat application.",
   "main": "dist/server.js",
+  "scripts": {
+    "new-module": "node ./src/app/modules/.builder.js",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only --watch .env src/server.ts",
+    "lint": "eslint src --ignore-path .gitignore --ext .ts",
+    "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
+    "prisma:studio": "npx prisma studio",
+    "prisma:generate": "npx prisma generate",
+    "prisma:push": "npx prisma db push",
+    "prisma:cleanup": "rm -rf ./prisma"
+  },
   "author": {
     "name": "Shaishab Chandra Shil",
     "github": "https://github.com/shaishab316"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/shaishab316/business-management.git"
+    "url": "https://github.com/shaishab316/heart-vibrate-server.git"
   },
-  "scripts": {
-    "new-module": "node ./src/app/modules/.builder.js",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only --watch .env src/server.ts",
-    "stripe": "stripe listen --forward-to http://192.168.10.132:3759/api/v1/payment/stripe/webhook",
-    "lint": "eslint src --ignore-path .gitignore --ext .ts",
-    "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "prisma:studio": "npx prisma studio",
-    "prisma:generate": "npx prisma generate",
-    "prisma:push": "npx prisma db push",
-    "prisma:cleanup": "rm -rf ./prisma"
+  "template": {
+    "name": "express-it",
+    "repository": "https://github.com/shaishab316/express-it.git"
   },
   "keywords": [
-    "business",
-    "management"
+    "socket.io",
+    "chat",
+    "realtime",
+    "messaging"
   ],
   "license": "MIT",
   "devDependencies": {
@@ -65,7 +65,6 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
-    "firebase-admin": "^13.4.0",
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.18.0",
@@ -74,7 +73,6 @@
     "multer": "^1.4.4",
     "multer-gridfs-storage": "meme8383/multer-gridfs-storage#f82252c",
     "nodemailer": "^6.9.16",
-    "stripe": "^17.2.1",
     "winston": "^3.13.0",
     "winston-mongodb": "^6.0.0",
     "zod": "^3.23.8"

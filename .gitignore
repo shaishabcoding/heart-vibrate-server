@@ -6,4 +6,3 @@ winston
 uploads
 dist
 prisma
-/src/app/modules

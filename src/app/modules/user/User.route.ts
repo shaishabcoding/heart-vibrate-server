@@ -7,7 +7,7 @@ import capture from '../../middlewares/capture';
 import { AuthControllers } from '../auth/Auth.controller';
 import auth from '../../middlewares/auth';
 
-const avatarCapture = capture({
+export const avatarCapture = capture({
   avatar: { size: 5 * 1024 * 1024, maxCount: 1 },
 });
 
@@ -17,13 +17,6 @@ const admin = Router();
     '/',
     purifyRequest(QueryValidations.list, UserValidations.getAllUser),
     UserControllers.superGetAllUser,
-  );
-
-  admin.post(
-    '/create-sub-admin',
-    avatarCapture,
-    purifyRequest(UserValidations.create, UserValidations.edit),
-    UserControllers.createSubAdmin,
   );
 
   admin.patch(
@@ -36,7 +29,7 @@ const admin = Router();
   admin.delete(
     '/:userId/delete',
     purifyRequest(QueryValidations.exists('userId', 'user')),
-    UserControllers.delete,
+    UserControllers.superDelete,
   );
 }
 
@@ -58,41 +51,6 @@ const user = Router();
     purifyRequest(UserValidations.changePassword),
     AuthControllers.changePassword,
   );
-
-  user.post(
-    '/request-for-influencer',
-    auth.user(),
-    avatarCapture,
-    purifyRequest(UserValidations.requestForInfluencer),
-    UserControllers.requestForInfluencer,
-  );
 }
 
-const subAdmin = Router();
-{
-  subAdmin.get(
-    '/',
-    purifyRequest(QueryValidations.list, UserValidations.getAllUser),
-    UserControllers.getAllUser,
-  );
-
-  subAdmin.get(
-    '/pending-influencers',
-    purifyRequest(QueryValidations.list),
-    UserControllers.getPendingInfluencers,
-  );
-
-  subAdmin.post(
-    '/:influencerId/approve',
-    purifyRequest(QueryValidations.exists('influencerId', 'user')),
-    UserControllers.approveInfluencer,
-  );
-
-  subAdmin.post(
-    '/:influencerId/decline',
-    purifyRequest(QueryValidations.exists('influencerId', 'user')),
-    UserControllers.declineInfluencer,
-  );
-}
-
-export const UserRoutes = { admin, user, subAdmin };
+export const UserRoutes = { admin, user };

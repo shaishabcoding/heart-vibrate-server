@@ -1,22 +1,21 @@
 import { z } from 'zod';
 import config from '../../../config';
 
+const otpLength = config.otp.length;
+
 export const OtpValidations = {
   email: z.object({
     body: z.object({
-      email: z
-        .string({ required_error: 'Email is missing' })
-        .toLowerCase()
-        .email('Give a valid email'),
+      email: z.email('Give a valid email'),
     }),
   }),
 
   otp: z.object({
     body: z.object({
-      otp: z
-        .string({ required_error: 'OTP is missing' })
-        .min(config.otp.length, 'Give a valid OTP')
-        .max(config.otp.length, 'Give a valid OTP'),
+      otp: z.coerce
+        .string({ error: 'OTP is missing' })
+        .min(otpLength, 'OTP must be 6 characters long')
+        .max(otpLength, 'OTP must be 6 characters long'),
     }),
   }),
 };

@@ -13,14 +13,12 @@ export const ChatValidations = {
         .pipe(
           z
             .array(
-              z
-                .string()
-                .refine(exists('user'), id => ({
-                  message: `User not found with id: ${id}`,
-                  path: ['target'],
-                })),
+              z.string().refine(exists('user'), {
+                error: ({ input }) => `User not found with id: ${input}`,
+                path: ['target'],
+              }),
             )
-            .min(1, 'At least one user is required'),
+            .nonempty('At least one user is required'),
         ),
     }),
   }),
@@ -35,12 +33,10 @@ export const ChatValidations = {
         .pipe(
           z
             .array(
-              z
-                .string()
-                .refine(exists('user'), id => ({
-                  message: `User not found with id: ${id}`,
-                  path: ['target'],
-                })),
+              z.string().refine(exists('user'), {
+                error: ({ input }) => `User not found with id: ${input}`,
+                path: ['userIds'],
+              }),
             )
             .min(2, 'At least two user is required'),
         )
@@ -51,14 +47,12 @@ export const ChatValidations = {
         .pipe(
           z
             .array(
-              z
-                .string()
-                .refine(exists('user'), id => ({
-                  message: `Admin not found with id: ${id}`,
-                  path: ['target'],
-                })),
+              z.string().refine(exists('user'), {
+                error: ({ input }) => `User not found with id: ${input}`,
+                path: ['adminIds'],
+              }),
             )
-            .min(1, 'At least one admin is required'),
+            .nonempty('At least one admin is required'),
         )
         .optional(),
     }),

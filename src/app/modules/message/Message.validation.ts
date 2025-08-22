@@ -4,22 +4,22 @@ import { EMessageType } from '../../../../prisma';
 
 export const MessageValidations = {
   send: z.object({
-    chatId: z.string().refine(exists('chat'), id => ({
-      message: `Chat not found with id: ${id}`,
+    chatId: z.string().refine(exists('chat'), {
+      error: ({ input }) => `Chat not found with id: ${input}`,
       path: ['chatId'],
-    })),
-    type: z.nativeEnum(EMessageType).default(EMessageType.TEXT),
+    }),
+    type: z.enum(EMessageType).default(EMessageType.TEXT),
     content: z
       .string({
-        required_error: 'Message content is required',
+        error: 'Message content is required',
       })
-      .min(1, 'Message content is required'),
+      .nonempty('Message content is required'),
     replyToId: z
       .string()
-      .refine(exists('message'), id => ({
-        message: `Replied Message not found with id: ${id}`,
+      .refine(exists('message'), {
+        error: ({ input }) => `Reply to message not found with id: ${input}`,
         path: ['replyToId'],
-      }))
+      })
       .optional(),
   }),
 };

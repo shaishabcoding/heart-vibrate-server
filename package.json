@@ -75,7 +75,7 @@
     "nodemailer": "^6.9.16",
     "winston": "^3.13.0",
     "winston-mongodb": "^6.0.0",
-    "zod": "^3.23.8"
+    "zod": "^4.0.17"
   },
   "overrides": {
     "multer-gridfs-storage": {

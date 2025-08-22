@@ -6,12 +6,15 @@ import './array';
 
 declare global {
   interface Object {
-    _pipe<T, R>(f: (value: T) => R): R;
+    _via_pipe<T, R>(f: (value: T) => R): R;
   }
 }
 
-// pipe create some issus, so i use _pipe
-Object.defineProperty(Object.prototype, '_pipe', {
+/**
+ * This is also known as a method call chain
+ * Also known as .pipe();
+ */
+Object.defineProperty(Object.prototype, '_via_pipe', {
   value<T, R>(f: (value: T) => R) {
     return f(this.valueOf() as T);
   },

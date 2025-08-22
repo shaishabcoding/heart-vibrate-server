@@ -3,6 +3,10 @@ import { exists } from '../../../util/db/exists';
 import { TModels } from '../../../util/prisma';
 
 export const QueryValidations = {
+  /**
+   * this for, get route pagination.
+   * page, limit parsed from query
+   */
   list: z.object({
     query: z.object({
       page: z.coerce.number().min(1).default(1),
@@ -12,16 +16,17 @@ export const QueryValidations = {
 
   /**
    * Validation for checking if a document exists in the given model.
-   * @param _id The name of the param containing the document ID
+   * @param id The name of the param containing the document ID
    * @param model The prisma model for the document
    */
-  exists: (_id: string, model: TModels) =>
+  exists: (id: string, model: TModels) =>
     z.object({
       params: z.object({
-        [_id]: z.string().refine(exists(model), id => ({
-          message: `${model.toCapitalize()} not found with id: ${id}`,
-          path: [_id],
-        })),
+        [id]: z.string().refine(exists(model), {
+          error: ({ input }) =>
+            `${model.toCapitalize()} not found with id: ${input}`,
+          path: [id],
+        }),
       }),
     }),
 };

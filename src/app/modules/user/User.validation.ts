@@ -5,12 +5,9 @@ import { enum_encode } from '../../../util/transform/enum';
 export const UserValidations = {
   create: z.object({
     body: z.object({
-      email: z
-        .string({ required_error: 'Email is missing' })
-        .toLowerCase()
-        .email('Give a valid email'),
+      email: z.email('Give a valid email'),
       password: z
-        .string({ required_error: 'Password is missing' })
+        .string({ error: 'Password is missing' })
         .min(6, 'Password must be at least 6 characters long'),
     }),
   }),
@@ -24,13 +21,12 @@ export const UserValidations = {
 
   changePassword: z.object({
     body: z.object({
+      //! Don't use length validation for old password
       oldPassword: z
-        .string({ required_error: 'Old Password is missing' })
-        .min(1, 'Old Password is required')
-        .min(6, 'Old Password must be at least 6 characters long'),
+        .string({ error: 'Old Password is missing' })
+        .min(1, 'Old Password is missing'),
       newPassword: z
-        .string({ required_error: 'New Password is missing' })
-        .min(1, 'New Password is required')
+        .string({ error: 'New Password is missing' })
         .min(6, 'New Password must be at least 6 characters long'),
     }),
   }),
@@ -42,7 +38,7 @@ export const UserValidations = {
         .string()
         .optional()
         .transform(enum_encode)
-        .pipe(z.nativeEnum(EUserRole).optional()),
+        .pipe(z.enum(EUserRole).optional()),
     }),
   }),
 };

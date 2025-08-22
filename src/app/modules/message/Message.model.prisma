@@ -7,7 +7,7 @@ model Message {
   senderId  String            @db.ObjectId
   sender    User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
   type      EMessageType      @default(TEXT)
-  content   String
+  content   String?
   history   TMessageHistory[]
   readBy    String[]          @default([]) @db.ObjectId
   reacts    Json?

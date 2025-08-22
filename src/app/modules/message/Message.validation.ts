@@ -22,4 +22,20 @@ export const MessageValidations = {
       })
       .optional(),
   }),
+
+  editContent: z.object({
+    messageId: z.string().refine(exists('message'), {
+      error: ({ input }) => `Message not found with id: ${input}`,
+      path: ['messageId'],
+    }),
+    content: z
+      .string({
+        error: 'Message content is required',
+      })
+      .nonempty('Message content is required'),
+  }),
 };
+
+export type TMessageEditContent = z.infer<
+  typeof MessageValidations.editContent
+>;

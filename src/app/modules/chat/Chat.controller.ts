@@ -24,4 +24,17 @@ export const ChatControllers = {
 
     serveResponse(res, { message: 'Chat deleted successfully!' });
   }),
+
+  retrieveAll: catchAsync(async ({ user, query }, res) => {
+    const { chats, meta } = await ChatServices.retrieveAll({
+      ...query,
+      userId: user.id,
+    });
+
+    serveResponse(res, {
+      message: 'Chats retrieved successfully!',
+      meta,
+      data: chats,
+    });
+  }),
 };

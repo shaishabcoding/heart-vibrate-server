@@ -1,9 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
-import { Chat as TChat } from '../../../../prisma';
+import { Prisma, Chat as TChat } from '../../../../prisma';
 import ServerError from '../../../errors/ServerError';
 import prisma from '../../../util/prisma';
 import { TChatEdit, TChatJoin } from './Chat.validation';
 import { deleteImage } from '../../middlewares/capture';
+import { TList } from '../query/Query.interface';
+import { TPagination } from '../../../util/server/serveResponse';
 
 export const ChatServices = {
   async join({ target, banner, name, userId }: TChatJoin & { userId: string }) {
@@ -76,5 +78,30 @@ export const ChatServices = {
     chat.banner?._via_pipe(deleteImage);
 
     // TODO: update socket +> inbox
+  },
+
+  async retrieveAll({ limit, page, userId }: TList) {
+    const where: Prisma.ChatWhereInput = { userIds: { has: userId } };
+
+    const chats = await prisma.chat.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    const total = await prisma.chat.count({ where });
+
+    return {
+      meta: {
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        } as TPagination,
+      },
+      chats,
+    };
   },
 };

@@ -7,6 +7,7 @@ import colors from 'colors';
 import bcrypt from 'bcryptjs';
 import { EUserRole } from '../../../../prisma';
 import { enum_decode } from '../../../util/transform/enum';
+import prisma from '../../../util/prisma';
 
 export type TToken = keyof typeof config.jwt;
 export const superRoles: readonly EUserRole[] & { 0: EUserRole } = [
@@ -70,4 +71,29 @@ export const hashPassword = async (password: string) => {
 
 export const verifyPassword = async (password: string, hash: string) => {
   return bcrypt.compare(password, hash);
+};
+
+export const decodeUser = async (
+  token: string | undefined,
+  token_type: TToken = 'access_token',
+) => {
+  const { uid } = decodeToken(token, token_type);
+
+  if (!uid)
+    throw new ServerError(
+      StatusCodes.UNAUTHORIZED,
+      'Your session has expired. Login again.',
+    );
+
+  const user = await prisma.user.findUnique({
+    where: { id: uid },
+  });
+
+  if (!user)
+    throw new ServerError(
+      StatusCodes.UNAUTHORIZED,
+      'Maybe your account has been deleted. Register again.',
+    );
+
+  return user;
 };

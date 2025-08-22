@@ -2,7 +2,7 @@ model User {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  name      String    @default("Guest User")
+  name      String    @default("Unknown")
   email     String    @unique
   role      EUserRole @default(GUEST)
   avatar    String    @default("/images/placeholder.png")

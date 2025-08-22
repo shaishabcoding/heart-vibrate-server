@@ -6,7 +6,7 @@ import './array';
 
 declare global {
   interface Object {
-    _via_pipe<T, R>(f: (value: T) => R): R;
+    __pipes<T, R>(...fs: ((value: T) => R)[]): T;
   }
 }
 
@@ -14,9 +14,10 @@ declare global {
  * This is also known as a method call chain
  * Also known as .pipe();
  */
-Object.defineProperty(Object.prototype, '_via_pipe', {
-  value<T, R>(f: (value: T) => R) {
-    return f(this.valueOf() as T);
+Object.defineProperty(Object.prototype, '__pipes', {
+  async value<T, R>(...fs: ((value: T) => R)[]) {
+    for (const f of fs) await f(this);
+    return this;
   },
   enumerable: false,
   configurable: true,

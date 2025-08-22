@@ -1,9 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
 import ServerError from '../../errors/ServerError';
-import { decodeToken, superRoles, TToken } from '../modules/auth/Auth.utils';
+import { decodeUser, superRoles, TToken } from '../modules/auth/Auth.utils';
 import catchAsync from './catchAsync';
 import { EUserRole } from '../../../prisma';
-import prisma from '../../util/prisma';
 import { enum_decode } from '../../util/transform/enum';
 
 /**
@@ -14,25 +13,11 @@ import { enum_decode } from '../../util/transform/enum';
 const auth = (roles: EUserRole[] = [], token_type: TToken = 'access_token') =>
   catchAsync(async (req, _, next) => {
     const token =
-      req.cookies[token_type] ||
-      req.headers.authorization ||
+      req.cookies[token_type] ??
+      req.headers.authorization ??
       req.query[token_type];
 
-    const id = decodeToken(token, token_type)?.uid;
-
-    if (!id)
-      throw new ServerError(
-        StatusCodes.UNAUTHORIZED,
-        'Your session has expired. Login again.',
-      );
-
-    const user = await prisma.user.findUnique({ where: { id } });
-
-    if (!user)
-      throw new ServerError(
-        StatusCodes.UNAUTHORIZED,
-        'Maybe your account has been deleted. Register again.',
-      );
+    const user = await decodeUser(token, token_type);
 
     const requiredRoles = Array.from(new Set([...superRoles, ...roles]));
 

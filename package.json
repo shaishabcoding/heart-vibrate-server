@@ -73,6 +73,7 @@
     "multer": "^1.4.4",
     "multer-gridfs-storage": "meme8383/multer-gridfs-storage#f82252c",
     "nodemailer": "^6.9.16",
+    "socket.io": "^4.8.1",
     "winston": "^3.13.0",
     "winston-mongodb": "^6.0.0",
     "zod": "^4.0.17"

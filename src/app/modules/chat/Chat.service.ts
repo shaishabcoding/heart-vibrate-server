@@ -51,7 +51,7 @@ export const ChatServices = {
       );
 
     // Delete old banner for new banner
-    if (banner) chat.banner?._via_pipe(deleteImage);
+    if (banner) chat.banner?.__pipes(deleteImage);
 
     chat = await prisma.chat.update({
       where: { id: chatId },
@@ -75,7 +75,7 @@ export const ChatServices = {
     await prisma.chat.delete({ where: { id: chatId } });
 
     // Delete the associated chat image
-    chat.banner?._via_pipe(deleteImage);
+    chat.banner?.__pipes(deleteImage);
 
     // TODO: update socket +> inbox
   },

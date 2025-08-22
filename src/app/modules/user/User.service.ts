@@ -22,7 +22,7 @@ export const UserServices = {
     user: Partial<TUser>;
     body: Partial<TUser>;
   }) {
-    if (body.avatar) user?.avatar?._via_pipe(deleteImage);
+    if (body.avatar) user?.avatar?.__pipes(deleteImage);
 
     return prisma.user.update({ where: { id: user.id }, data: body });
   },
@@ -70,7 +70,7 @@ export const UserServices = {
   async delete(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    user?.avatar?._via_pipe(deleteImage); // delete avatar
+    user?.avatar?.__pipes(deleteImage); // delete avatar
 
     return prisma.user.delete({ where: { id: userId } });
   },

@@ -2,11 +2,18 @@
 import { createLogger, format, transports } from 'winston';
 import 'winston-mongodb';
 import config from '../../config';
+import stripAnsi from 'strip-ansi';
 
 const { combine, timestamp, label, printf } = format;
 
-const customFormat = printf(({ level, message, label, timestamp }) => {
-  return `${timestamp} [${label}] ${level}: ${message}`;
+const customFormat = printf(
+  ({ level, message, label, timestamp }) =>
+    `${timestamp} [${label}] ${level}: ${message}`,
+);
+
+const removeColorsFormat = format(info => {
+  info.message = stripAnsi(info.message as string);
+  return info;
 });
 
 /**
@@ -27,6 +34,7 @@ export const logger = createLogger({
       collection: 'app_logs',
       tryReconnect: true,
       level: 'info',
+      format: combine(removeColorsFormat()),
     }),
   ],
 });
@@ -49,6 +57,7 @@ export const errorLogger = createLogger({
       collection: 'error_logs',
       tryReconnect: true,
       level: 'error',
+      format: combine(removeColorsFormat()),
     }),
   ],
 });

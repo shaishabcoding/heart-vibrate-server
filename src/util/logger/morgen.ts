@@ -6,10 +6,9 @@ import { Response } from 'express';
 
 morgan.token('message', (_, res: Response) => res?.locals.errorMessage ?? '');
 
-const getIpFormat = () =>
-  config.server.isDevelopment ? ':remote-addr - ' : '';
-const successResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms`;
-const errorResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms`;
+const getIpFormat = config.server.isDevelopment ? ':remote-addr - ' : '';
+const successResponseFormat = `${getIpFormat}:method :url :status - :response-time ms`;
+const errorResponseFormat = `${getIpFormat}:method :url :status - :response-time ms`;
 
 /**
  * Success handler for Morgan logging

@@ -8,6 +8,7 @@ model User {
   avatar    String    @default("/images/placeholder.png")
   Auth      Auth?
   Otp       Otp?
+  Message   Message[]
 
   @@map("users")
 }

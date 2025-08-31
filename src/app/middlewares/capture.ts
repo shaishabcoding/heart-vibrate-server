@@ -9,6 +9,7 @@ import { errorLogger, logger } from '../../util/logger/logger';
 import colors from 'colors';
 import { json } from '../../util/transform/json';
 import { getBucket } from '../../util/server/connectDB';
+import path from 'path';
 
 export const fileValidators = {
   images: {
@@ -120,7 +121,7 @@ export const fileRetriever = catchAsync(async (req, res) => {
  * Delete file from GridFS
  */
 export const deleteFile = async (filename: string) => {
-  filename = filename.replace(/[^\w.-]/g, '');
+  filename = path.basename(filename);
 
   try {
     if (!getBucket()) return;
@@ -168,8 +169,6 @@ const fileFilter =
       .find(f => file.fieldname === f)
       ?.toLowerCase();
     const fileType = fields[fieldType!]?.fileType;
-
-    console.log(fileType);
 
     const mime = file.mimetype.toLowerCase();
 

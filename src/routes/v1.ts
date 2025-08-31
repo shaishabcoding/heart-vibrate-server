@@ -5,11 +5,12 @@ import { AuthRoutes } from '../app/modules/auth/Auth.route';
 import { UserRoutes } from '../app/modules/user/User.route';
 import { StatusCodes } from 'http-status-codes';
 import { ChatRoutes } from '../app/modules/chat/Chat.route';
+import { fileTypes } from '../app/middlewares/capture';
 
 const appRouter = Router();
 
 /** Forward uploaded files requests */
-['images'].map((filetype: string) =>
+fileTypes.map((filetype: string) =>
   appRouter.get(`/${filetype}/:filename`, (req, res) =>
     res.redirect(
       StatusCodes.MOVED_PERMANENTLY,

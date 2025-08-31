@@ -7,7 +7,7 @@ import { QueryValidations } from '../query/Query.validation';
 import { MessageControllers } from '../message/Message.controller';
 
 export const bannerCapture = capture({
-  banner: { size: 5 * 1024 * 1024, maxCount: 1 },
+  banner: { size: 5 * 1024 * 1024, maxCount: 1, fileType: 'images' },
 });
 
 const user = Router();

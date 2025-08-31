@@ -8,7 +8,7 @@ import { AuthControllers } from '../auth/Auth.controller';
 import auth from '../../middlewares/auth';
 
 export const avatarCapture = capture({
-  avatar: { size: 5 * 1024 * 1024, maxCount: 1 },
+  avatar: { size: 5 * 1024 * 1024, maxCount: 1, fileType: 'images' },
 });
 
 const admin = Router();

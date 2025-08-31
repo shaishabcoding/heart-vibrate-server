@@ -13,7 +13,7 @@ export default async function connectDB() {
   await client.connect();
   logger.info(colors.green('🚀 Database connected successfully'));
 
-  bucket ??= new GridFSBucket(client.db(), { bucketName: 'images' });
+  bucket ??= new GridFSBucket(client.db(), { bucketName: 'files' });
 }
 
 export const getBucket = () => bucket;

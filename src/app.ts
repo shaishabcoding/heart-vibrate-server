@@ -5,7 +5,7 @@ import RoutesV1 from './routes/v1';
 import { Morgan } from './util/logger/morgen';
 import cookieParser from 'cookie-parser';
 import config from './config';
-import { imageRetriever } from './app/middlewares/capture';
+import { fileRetriever, fileTypes } from './app/middlewares/capture';
 import { notFoundError } from './errors';
 
 /**
@@ -18,7 +18,7 @@ const app = express();
 
 // Serve static files
 app.use(express.static('public'));
-app.get('/images/:filename', imageRetriever);
+fileTypes.forEach(type => app.get(`/${type}/:filename`, fileRetriever));
 
 // Configure middleware
 app.use(

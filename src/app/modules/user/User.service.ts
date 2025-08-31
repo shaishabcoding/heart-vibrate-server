@@ -1,6 +1,6 @@
 import { TList } from '../query/Query.interface';
 import { userSearchableFields as searchFields } from './User.constant';
-import { deleteImage } from '../../middlewares/capture';
+import { deleteFile } from '../../middlewares/capture';
 import prisma from '../../../util/prisma';
 import { Auth as TAuth, User as TUser } from '../../../../prisma';
 import { TPagination } from '../../../util/server/serveResponse';
@@ -22,7 +22,7 @@ export const UserServices = {
     user: Partial<TUser>;
     body: Partial<TUser>;
   }) {
-    if (body.avatar) user?.avatar?.__pipes(deleteImage);
+    if (body.avatar) user?.avatar?.__pipes(deleteFile);
 
     return prisma.user.update({ where: { id: user.id }, data: body });
   },
@@ -70,7 +70,7 @@ export const UserServices = {
   async delete(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
-    user?.avatar?.__pipes(deleteImage); // delete avatar
+    user?.avatar?.__pipes(deleteFile); // delete avatar
 
     return prisma.user.delete({ where: { id: userId } });
   },

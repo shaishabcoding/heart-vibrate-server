@@ -10,7 +10,6 @@ import { AdminServices } from '../../app/modules/admin/Admin.service';
 import killPort from 'kill-port';
 import { verifyEmailTransporter } from '../sendMail';
 
-
 const {
   server: { port, ip_address, name },
 } = config;

@@ -10,7 +10,7 @@ import { errorLogger } from '../../util/logger/logger';
 import { TErrorHandler, TErrorMessage } from '../../types/errors.types';
 import multer from 'multer';
 import handleMulterError from '../../errors/handleMulterError';
-import { deleteImage } from './capture';
+import { deleteFile } from './capture';
 import { Prisma } from '../../../prisma';
 import {
   handlePrismaRequestError,
@@ -25,7 +25,7 @@ export const defaultError: TErrorHandler = {
 
 const globalErrorHandler: ErrorRequestHandler = (error, req, res, _) => {
   /** delete uploaded files */
-  req.tempFiles?.forEach(deleteImage);
+  req.tempFiles?.forEach(deleteFile);
 
   if (config.server.isDevelopment)
     console.log(colors.red('🚨 globalErrorHandler ~~ '), error);

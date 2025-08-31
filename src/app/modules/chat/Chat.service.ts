@@ -3,7 +3,7 @@ import { Prisma, Chat as TChat } from '../../../../prisma';
 import ServerError from '../../../errors/ServerError';
 import prisma from '../../../util/prisma';
 import { TChatEdit, TChatJoin } from './Chat.validation';
-import { deleteImage } from '../../middlewares/capture';
+import { deleteFile } from '../../middlewares/capture';
 import { TList } from '../query/Query.interface';
 import { TPagination } from '../../../util/server/serveResponse';
 
@@ -51,7 +51,7 @@ export const ChatServices = {
       );
 
     // Delete old banner for new banner
-    if (banner) chat.banner?.__pipes(deleteImage);
+    if (banner) chat.banner?.__pipes(deleteFile);
 
     chat = await prisma.chat.update({
       where: { id: chatId },
@@ -75,7 +75,7 @@ export const ChatServices = {
     await prisma.chat.delete({ where: { id: chatId } });
 
     // Delete the associated chat image
-    chat.banner?.__pipes(deleteImage);
+    chat.banner?.__pipes(deleteFile);
 
     // TODO: update socket +> inbox
   },

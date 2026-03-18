@@ -1,7 +1,0 @@
-node_modules
-.env
-
-/winston
-.vscode
-uploads
-dist

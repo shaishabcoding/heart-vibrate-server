@@ -3,9 +3,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   DATABASE_URL: z.string('DATABASE_URL is required').default('file:./dev.db'),
   PORT: z.coerce.number('PORT is required').default(3000),
-  NODE_ENV: z
-    .enum(['development', 'test', 'production'])
-    .default('development'),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
 export const validate = (config: Record<string, unknown>) => {

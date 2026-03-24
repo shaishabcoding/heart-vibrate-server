@@ -3,6 +3,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import { WsgateModule } from '@wsgate/nest';
 
+// biome-ignore lint/suspicious/noExplicitAny: Interface from NestJS
 export async function setupApiDocs(app: INestApplication<any>) {
   //? Swagger setup
   const swaggerConfig = new DocumentBuilder()

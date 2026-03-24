@@ -1,14 +1,14 @@
 model User {
   id String @id @default(uuid())
 
-  email         String @unique
-  password_hash String
+  email        String @unique
+  passwordHash String
 
-  name      String?
-  photo_url String?
+  name     String?
+  photoUrl String?
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }

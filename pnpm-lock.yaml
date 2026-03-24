@@ -30,13 +30,13 @@ importers:
         specifier: ^11.1.17
         version: 11.1.17(@nestjs/common@11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.17)(@nestjs/platform-socket.io@11.1.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@prisma/adapter-better-sqlite3':
-        specifier: ^7.5.0
+        specifier: 7.5.0
         version: 7.5.0
       '@prisma/adapter-libsql':
-        specifier: ^7.5.0
+        specifier: 7.5.0
         version: 7.5.0
       '@prisma/client':
-        specifier: ^7.5.0
+        specifier: 7.5.0
         version: 7.5.0(prisma@7.5.0(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)
       '@scalar/nestjs-api-reference':
         specifier: ^1.1.4
@@ -97,7 +97,7 @@ importers:
         specifier: ^30.0.0
         version: 30.3.0(@types/node@22.19.15)(ts-node@10.9.2(@types/node@22.19.15)(typescript@5.9.3))
       prisma:
-        specifier: ^7.5.0
+        specifier: 7.5.0
         version: 7.5.0(@types/react@19.2.14)(better-sqlite3@12.8.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       simple-git-hooks:
         specifier: 2.13.1

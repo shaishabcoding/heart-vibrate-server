@@ -4,6 +4,7 @@ import { DiscoveryModule } from '@nestjs/core';
 import { WsgateExplorer } from '@wsgate/nest';
 import { validate as configValidate } from './config/app.config';
 import { PrismaModule } from './infra/prisma/prisma.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { UserModule } from './modules/user/user.module';
     }),
     UserModule,
     PrismaModule,
+    AuthModule,
   ],
   providers: [WsgateExplorer],
 })

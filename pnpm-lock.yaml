@@ -44,6 +44,9 @@ importers:
       '@wsgate/nest':
         specifier: ^0.0.7
         version: 0.0.7(@nestjs/common@11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.17)(@types/node@22.19.15)(@types/react@19.2.14)(immer@9.0.21)(monaco-editor@0.55.1)(reflect-metadata@0.2.2)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
@@ -2294,6 +2297,10 @@ packages:
   baseline-browser-mapping@2.10.8:
     resolution: {integrity: sha512-PCLz/LXGBsNTErbtB6i5u4eLpHeMfi93aUv5duMmj6caNu6IphS4q6UevDnL36sZQv9lrP11dbPKGMaXPwMKfQ==}
     engines: {node: '>=6.0.0'}
+    hasBin: true
+
+  bcryptjs@3.0.3:
+    resolution: {integrity: sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==}
     hasBin: true
 
   better-sqlite3@12.8.0:
@@ -7346,6 +7353,8 @@ snapshots:
   base64id@2.0.0: {}
 
   baseline-browser-mapping@2.10.8: {}
+
+  bcryptjs@3.0.3: {}
 
   better-sqlite3@12.8.0:
     dependencies:

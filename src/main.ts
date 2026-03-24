@@ -6,12 +6,14 @@ import chalk from 'chalk';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { AppModule } from './app.module';
 import { setupApiDocs } from './common/config/api-docs.config';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import type { Env } from './config/app.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(new ZodValidationPipe());
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   const config = app.get(ConfigService<Env, true>);
 

@@ -4,7 +4,7 @@ import { PrismaService } from 'src/infra/prisma/prisma.service';
 
 @Injectable()
 export class UserRepository {
-  constructor(readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: Prisma.UserCreateInput) {
     return this.prisma.user.create({ data });

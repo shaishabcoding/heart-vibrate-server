@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { User } from '@prisma/client';
 import { CurrentUser } from 'src/common/decorators';
 import { JwtGuard } from 'src/common/guards';
+import { SafeUser } from 'src/common/types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
 
@@ -16,9 +16,7 @@ export class UserController {
 
   @Get('me')
   @UseGuards(JwtGuard)
-  getMe(@CurrentUser() user: User) {
-    const { passwordHash, ...safeUser } = user;
-
+  getMe(@CurrentUser() safeUser: SafeUser) {
     return safeUser;
   }
 }

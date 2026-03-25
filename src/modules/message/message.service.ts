@@ -1,14 +1,19 @@
-import { ForbiddenException, Logger, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ChatGateway } from '../chat/chat.gateway';
 import { EditMessageInput } from './dto/edit-message.dto';
 import { GetMessagesInput } from './dto/get-messages.dto';
 import { ReactMessageInput } from './dto/react-message.dto';
 import { SendMessageInput } from './dto/send-message.dto';
 import { MessageRepository } from './repositories/message.repository';
 
+@Injectable()
 export class MessageService {
   private readonly logger = new Logger(MessageService.name);
 
-  constructor(private readonly messageRepository: MessageRepository) {}
+  constructor(
+    private readonly messageRepository: MessageRepository,
+    private readonly chatGateway: ChatGateway,
+  ) {}
 
   async sendMessage(userId: string, dto: SendMessageInput) {
     this.logger.log(`Sending message — userId: ${userId}, chatId: ${dto.chatId}`);
@@ -21,6 +26,8 @@ export class MessageService {
       sender: { connect: { id: userId } },
       ...(dto.replyToId && { replyTo: { connect: { id: dto.replyToId } } }),
     });
+
+    this.chatGateway.emitToChat(dto.chatId, 'new_message', message);
 
     this.logger.log(`Message sent — messageId: ${message.id}, chatId: ${dto.chatId}`);
     return message;
@@ -51,6 +58,8 @@ export class MessageService {
       isEdited: true,
     });
 
+    this.chatGateway.emitToChat(message.chatId, 'message_edited', message);
+
     this.logger.log(`Message edited — messageId: ${messageId}`);
     return message;
   }
@@ -58,8 +67,10 @@ export class MessageService {
   async deleteMessage(userId: string, messageId: string) {
     this.logger.log(`Deleting message — userId: ${userId}, messageId: ${messageId}`);
 
-    await this.verifyMessageOwner(messageId, userId);
+    const message = await this.verifyMessageOwner(messageId, userId);
     await this.messageRepository.delete(messageId);
+
+    this.chatGateway.emitToChat(message.chatId, 'message_deleted', { messageId });
 
     this.logger.log(`Message deleted — messageId: ${messageId}`);
   }
@@ -73,6 +84,13 @@ export class MessageService {
     await this.verifyParticipant(message.chatId, userId);
 
     const seen = await this.messageRepository.markSeen(messageId, userId);
+
+    this.chatGateway.emitToChat(message.chatId, 'message_seen', {
+      messageId,
+      userId,
+      seenAt: seen.seenAt,
+    });
+
     this.logger.log(`Message seen — messageId: ${messageId}, userId: ${userId}`);
     return seen;
   }
@@ -88,6 +106,13 @@ export class MessageService {
     await this.verifyParticipant(message.chatId, userId);
 
     const reaction = await this.messageRepository.upsertReaction(messageId, userId, dto.emoji);
+
+    this.chatGateway.emitToChat(message.chatId, 'reaction_added', {
+      messageId,
+      userId,
+      emoji: dto.emoji,
+    });
+
     this.logger.log(`Reaction added — messageId: ${messageId}, emoji: ${dto.emoji}`);
     return reaction;
   }
@@ -103,6 +128,13 @@ export class MessageService {
     await this.verifyParticipant(message.chatId, userId);
 
     await this.messageRepository.deleteReaction(messageId, userId, emoji);
+
+    this.chatGateway.emitToChat(message.chatId, 'reaction_removed', {
+      messageId,
+      userId,
+      emoji,
+    });
+
     this.logger.log(`Reaction removed — messageId: ${messageId}, emoji: ${emoji}`);
   }
 

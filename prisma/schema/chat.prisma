@@ -1,0 +1,36 @@
+model Chat {
+  id        String   @id @default(uuid())
+  type      ChatType @default(DIRECT)
+  name      String?
+  createdAt DateTime @default(now())
+
+  participants ChatParticipant[]
+  messages     Message[]
+
+  @@map("chats")
+}
+
+enum ChatType {
+  DIRECT
+  GROUP
+}
+
+model ChatParticipant {
+  id       String          @id @default(uuid())
+  chatId   String
+  userId   String
+  role     ParticipantRole @default(MEMBER)
+  joinedAt DateTime        @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+  @@map("chat_participants")
+}
+
+enum ParticipantRole {
+  ADMIN
+  MEMBER
+  GUEST
+}

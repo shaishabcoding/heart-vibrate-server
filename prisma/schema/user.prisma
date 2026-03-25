@@ -10,5 +10,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  chats     ChatParticipant[]
+  messages  Message[]
+  seen      MessageSeen[]
+  reactions MessageReaction[]
+
   @@map("users")
 }

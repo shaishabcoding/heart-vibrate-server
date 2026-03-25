@@ -1,0 +1,45 @@
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String?
+  content   String
+  isEdited  Boolean  @default(false)
+  replyToId String?
+  createdAt DateTime @default(now())
+
+  chat      Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender    User?             @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  replyTo   Message?          @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   Message[]         @relation("MessageReply")
+  seenBy    MessageSeen[]
+  reactions MessageReaction[]
+
+  @@map("messages")
+}
+
+model MessageSeen {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  seenAt    DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id])
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_seen")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id])
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@map("message_reactions")
+}

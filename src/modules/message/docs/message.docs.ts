@@ -1,16 +1,62 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 export const ApiSendMessage = () =>
   applyDecorators(
     ApiOperation({ summary: 'Send a message to a chat' }),
-    ApiResponse({ status: 201, description: 'Message sent' }),
+    ApiConsumes('multipart/form-data'),
+    ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          chatId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'ID of the chat to send message to',
+            example: '123e4567-e89b-12d3-a456-426614174000',
+          },
+          content: {
+            type: 'string',
+            description: 'Text content of the message',
+            example: 'Hello, how are you?',
+            maxLength: 5000,
+          },
+          replyToId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'ID of the message being replied to (optional)',
+            example: '123e4567-e89b-12d3-a456-426614174001',
+          },
+          attachment: {
+            type: 'string',
+            format: 'binary',
+            description: 'File attachment (max 5MB). Supported: images, PDFs, documents',
+          },
+        },
+        required: ['chatId'],
+      },
+    }),
+    ApiResponse({ status: 201, description: 'Message sent successfully' }),
     ApiResponse({ status: 403, description: 'Not a participant of this chat' }),
+    ApiResponse({ status: 400, description: 'Invalid input data' }),
+    ApiResponse({
+      status: 413,
+      description: 'File too large - maximum file size is 10MB',
+    }),
   );
 
 export const ApiGetMessages = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Get paginated messages for a chat (newest first)' }),
+    ApiOperation({
+      summary: 'Get paginated messages for a chat (newest first)',
+    }),
     ApiQuery({ name: 'chatId', required: true, type: String }),
     ApiQuery({
       name: 'cursor',
@@ -19,7 +65,10 @@ export const ApiGetMessages = () =>
       description: 'Last message ID for next page',
     }),
     ApiQuery({ name: 'limit', required: false, type: Number, example: 20 }),
-    ApiResponse({ status: 200, description: '{ data: Message[], nextCursor: string | null }' }),
+    ApiResponse({
+      status: 200,
+      description: '{ data: Message[], nextCursor: string | null }',
+    }),
     ApiResponse({ status: 403, description: 'Not a participant of this chat' }),
   );
 

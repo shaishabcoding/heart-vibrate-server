@@ -16,6 +16,9 @@ const envSchema = z.object({
     },
     z.union([z.literal('*'), z.array(z.url('Each origin must be a valid URL')).nonempty()]),
   ),
+  CLOUDINARY_CLOUD_NAME: z.string('CLOUDINARY_CLOUD_NAME is required'),
+  CLOUDINARY_API_KEY: z.string('CLOUDINARY_API_KEY is required'),
+  CLOUDINARY_API_SECRET: z.string('CLOUDINARY_API_SECRET is required'),
 });
 
 export const validate = (config: Record<string, unknown>) => {

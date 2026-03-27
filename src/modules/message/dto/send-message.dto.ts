@@ -1,3 +1,4 @@
+import { AttachmentType } from '@prisma/client';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
@@ -6,10 +7,15 @@ const SendMessageSchema = z.object({
   content: z
     .string()
     .min(1, "Message can't be empty")
-    .max(5000, "Message can't exceed 5000 characters"),
+    .max(5000, "Message can't exceed 5000 characters")
+    .optional(),
   replyToId: z.uuid('Invalid reply ID format').optional(),
 });
 
 export class SendMessageDto extends createZodDto(SendMessageSchema) {}
 
-export type SendMessageInput = z.infer<typeof SendMessageSchema>;
+export type SendMessageInput = z.infer<typeof SendMessageSchema> & {
+  attachmentUrl?: string;
+  publicId?: string;
+  attachmentType?: AttachmentType;
+};

@@ -1,11 +1,14 @@
 model Message {
-  id        String   @id @default(uuid())
-  chatId    String
-  senderId  String?
-  content   String
-  isEdited  Boolean  @default(false)
-  replyToId String?
-  createdAt DateTime @default(now())
+  id             String          @id @default(uuid())
+  chatId         String
+  senderId       String?
+  content        String?
+  attachmentUrl  String?
+  attachmentType AttachmentType?
+  publicId       String?
+  isEdited       Boolean         @default(false)
+  replyToId      String?
+  createdAt      DateTime        @default(now())
 
   chat      Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
   sender    User?             @relation(fields: [senderId], references: [id], onDelete: SetNull)
@@ -42,4 +45,12 @@ model MessageReaction {
 
   @@unique([messageId, userId, emoji])
   @@map("message_reactions")
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  RAW
+
+  @@map("attachment_type")
 }

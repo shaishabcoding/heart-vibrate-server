@@ -10,11 +10,15 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/decorators';
 import { JwtGuard } from 'src/common/guards';
+import { CloudinaryService } from '../upload/cloudinary.service';
+import { ChatFileInterceptor } from '../upload/interceptors/file-upload.interceptor';
 import {
   ApiAddReaction,
   ApiDeleteMessage,
@@ -34,12 +38,37 @@ import { MessageService } from './message.service';
 @UseGuards(JwtGuard)
 @Controller('message')
 export class MessageController {
-  constructor(private readonly messageService: MessageService) {}
+  constructor(
+    private readonly messageService: MessageService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Post()
   @ApiSendMessage()
-  sendMessage(@CurrentUser('id') userId: string, @Body() dto: SendMessageDto) {
-    return this.messageService.sendMessage(userId, dto as unknown as SendMessageInput);
+  @UseInterceptors(ChatFileInterceptor('attachment'))
+  async sendMessage(
+    @CurrentUser('id') userId: string,
+    @Body() dto: SendMessageDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    let attachmentUrl: string | undefined;
+    let publicId: string | undefined;
+    let attachmentType: string | undefined;
+
+    if (file) {
+      const uploaded = await this.cloudinaryService.uploadFile(file);
+
+      attachmentUrl = uploaded.url;
+      publicId = uploaded.publicId;
+      attachmentType = uploaded.attachmentType;
+    }
+
+    return this.messageService.sendMessage(userId, {
+      ...dto,
+      attachmentUrl,
+      publicId,
+      attachmentType,
+    } as SendMessageInput);
   }
 
   @Get()

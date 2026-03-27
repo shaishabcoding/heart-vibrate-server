@@ -21,7 +21,12 @@ export class MessageService {
     await this.verifyParticipant(dto.chatId, userId);
 
     const message = await this.messageRepository.create({
-      content: dto.content,
+      ...(dto.content && { content: dto.content }),
+      ...(dto.attachmentUrl && {
+        attachmentUrl: dto.attachmentUrl,
+        attachmentType: dto.attachmentType,
+        publicId: dto.publicId,
+      }),
       chat: { connect: { id: dto.chatId } },
       sender: { connect: { id: userId } },
       ...(dto.replyToId && { replyTo: { connect: { id: dto.replyToId } } }),
@@ -70,7 +75,9 @@ export class MessageService {
     const message = await this.verifyMessageOwner(messageId, userId);
     await this.messageRepository.delete(messageId);
 
-    this.chatGateway.emitToChat(message.chatId, 'message_deleted', { messageId });
+    this.chatGateway.emitToChat(message.chatId, 'message_deleted', {
+      messageId,
+    });
 
     this.logger.log(`Message deleted — messageId: ${messageId}`);
   }

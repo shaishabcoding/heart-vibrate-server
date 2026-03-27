@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ChatGateway } from '../chat/chat.gateway';
+import { WsgateNewMessage } from './docs/message.ws-docs';
 import { EditMessageInput } from './dto/edit-message.dto';
 import { GetMessagesInput } from './dto/get-messages.dto';
 import { ReactMessageInput } from './dto/react-message.dto';
@@ -15,6 +16,7 @@ export class MessageService {
     private readonly chatGateway: ChatGateway,
   ) {}
 
+  @WsgateNewMessage()
   async sendMessage(userId: string, dto: SendMessageInput) {
     this.logger.log(`Sending message — userId: ${userId}, chatId: ${dto.chatId}`);
 

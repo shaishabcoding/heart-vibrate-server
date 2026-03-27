@@ -10,6 +10,12 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import {
+  WsgateJoinChat,
+  WsgateLeaveChat,
+  WsgateStopTyping,
+  WsgateTyping,
+} from './docs/chat.ws-docs';
 
 // Extend Socket to carry decoded user after handshake auth
 interface AuthSocket extends Socket {
@@ -53,6 +59,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // ── Room management ───────────────────────────────────────────────────────
 
+  @WsgateJoinChat()
   @SubscribeMessage('joinChat')
   handleJoinChat(
     @ConnectedSocket() client: AuthSocket,
@@ -60,8 +67,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     client.join(payload.chatId);
     this.logger.log(`User joined room — userId: ${client.user.id}, chatId: ${payload.chatId}`);
+
+    return { message: `Joined chat ${payload.chatId}` };
   }
 
+  @WsgateLeaveChat()
   @SubscribeMessage('leaveChat')
   handleLeaveChat(
     @ConnectedSocket() client: AuthSocket,
@@ -69,10 +79,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     client.leave(payload.chatId);
     this.logger.log(`User left room — userId: ${client.user.id}, chatId: ${payload.chatId}`);
+
+    return { message: `Left chat ${payload.chatId}` };
   }
 
   // ── Typing indicators (no DB write) ───────────────────────────────────────
 
+  @WsgateTyping()
   @SubscribeMessage('typing')
   handleTyping(@ConnectedSocket() client: AuthSocket, @MessageBody() payload: { chatId: string }) {
     // broadcast to everyone in room except the sender
@@ -82,6 +95,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  @WsgateStopTyping()
   @SubscribeMessage('stopTyping')
   handleStopTyping(
     @ConnectedSocket() client: AuthSocket,

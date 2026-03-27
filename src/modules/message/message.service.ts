@@ -1,6 +1,13 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ChatGateway } from '../chat/chat.gateway';
-import { WsgateNewMessage } from './docs/message.ws-docs';
+import {
+  WsgateMessageDeleted,
+  WsgateMessageEdited,
+  WsgateMessageSeen,
+  WsgateNewMessage,
+  WsgateReactionAdded,
+  WsgateReactionRemoved,
+} from './docs/message.ws-docs';
 import { EditMessageInput } from './dto/edit-message.dto';
 import { GetMessagesInput } from './dto/get-messages.dto';
 import { ReactMessageInput } from './dto/react-message.dto';
@@ -55,6 +62,7 @@ export class MessageService {
     return result;
   }
 
+  @WsgateMessageEdited()
   async editMessage(userId: string, messageId: string, dto: EditMessageInput) {
     this.logger.log(`Editing message — userId: ${userId}, messageId: ${messageId}`);
 
@@ -71,6 +79,7 @@ export class MessageService {
     return message;
   }
 
+  @WsgateMessageDeleted()
   async deleteMessage(userId: string, messageId: string) {
     this.logger.log(`Deleting message — userId: ${userId}, messageId: ${messageId}`);
 
@@ -84,6 +93,7 @@ export class MessageService {
     this.logger.log(`Message deleted — messageId: ${messageId}`);
   }
 
+  @WsgateMessageSeen()
   async markSeen(userId: string, messageId: string) {
     this.logger.log(`Marking seen — userId: ${userId}, messageId: ${messageId}`);
 
@@ -104,6 +114,7 @@ export class MessageService {
     return seen;
   }
 
+  @WsgateReactionAdded()
   async addReaction(userId: string, messageId: string, dto: ReactMessageInput) {
     this.logger.log(
       `Adding reaction — userId: ${userId}, messageId: ${messageId}, emoji: ${dto.emoji}`,
@@ -126,6 +137,7 @@ export class MessageService {
     return reaction;
   }
 
+  @WsgateReactionRemoved()
   async removeReaction(userId: string, messageId: string, emoji: string) {
     this.logger.log(
       `Removing reaction — userId: ${userId}, messageId: ${messageId}, emoji: ${emoji}`,
